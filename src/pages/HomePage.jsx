@@ -9,11 +9,11 @@ const HomePage = () => {
   return (
     <div className="w-full">
       <HeroSection />
-      <FeaturesSection />
+      {/* <FeaturesSection />
       <WhyChooseUsSection />
       <DashboardPreviewSection />
-      <TestimonialsSection />
-      <CTASection />
+      <TestimonialsSection /> */}
+      {/* <CTASection /> */}
     </div>
   );
 };

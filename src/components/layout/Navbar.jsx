@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import useAuthStore from '../../store/authStore';
-import Button from '../common/Button';
+import LogoNutriGO from '../../assets/images/LogoNutriGO.png';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -12,68 +12,69 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md shadow-sm">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md">
       <div className="max-w-6xl mx-auto px-6 lg:px-10 w-full">
         <div className="flex items-center justify-between h-20">
-          <div className="flex items-center">
-            <Link to="/" className="font-bold text-xl text-[#1A202C] hover:text-[#4ECDC4] transition-colors">
-              Health & Digital Nutrition
+          {/* Logo */}
+          <div className="flex items-center gap-2">
+            <Link to="/" className="font-bold text-lg text-[#1A202C] hover:text-[#4ECDC4] transition-colors">
+              <img src={LogoNutriGO} alt="NutriGo Logo" className="w-30 h-30 object-contain" />
             </Link>
-            {isAuthenticated && (
-              <div className="ml-10 hidden lg:flex items-baseline space-x-6">
-                <Link
-                  to="/dashboard"
-                  className="text-[#8E9AAF] hover:text-[#4ECDC4] font-medium transition-colors"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  to="/food-diary"
-                  className="text-[#8E9AAF] hover:text-[#4ECDC4] font-medium transition-colors"
-                >
-                  Jurnal Makanan
-                </Link>
-                <Link
-                  to="/progress"
-                  className="text-[#8E9AAF] hover:text-[#4ECDC4] font-medium transition-colors"
-                >
-                  Progres
-                </Link>
-                <Link
-                  to="/profile"
-                  className="text-[#8E9AAF] hover:text-[#4ECDC4] font-medium transition-colors"
-                >
-                  Profil
-                </Link>
-              </div>
-            )}
           </div>
-          <div className="flex items-center space-x-4">
+
+          {/* Center Navigation */}
+          {isAuthenticated && (
+            <div className="hidden lg:flex items-baseline space-x-8">
+              <Link
+                to="/dashboard"
+                className="text-[#8E9AAF] hover:text-[#4ECDC4] font-medium transition-colors text-sm"
+              >
+                Dashboard
+              </Link>
+              <Link
+                to="/food-diary"
+                className="text-[#8E9AAF] hover:text-[#4ECDC4] font-medium transition-colors text-sm"
+              >
+                Jurnal Makanan
+              </Link>
+              <Link
+                to="/progress"
+                className="text-[#8E9AAF] hover:text-[#4ECDC4] font-medium transition-colors text-sm"
+              >
+                Progres
+              </Link>
+              <Link
+                to="/profile"
+                className="text-[#8E9AAF] hover:text-[#4ECDC4] font-medium transition-colors text-sm"
+              >
+                Profil
+              </Link>
+            </div>
+          )}
+
+          {/* Right Side - Auth */}
+          <div className="flex items-center space-x-6">
             {isAuthenticated ? (
               <>
                 <span className="text-sm text-[#8E9AAF] hidden sm:block">Halo, {user?.name || 'User'}</span>
-                <Button 
-                  variant="ghost" 
+                <button
                   onClick={handleLogout}
-                  className="text-[#8E9AAF] hover:text-[#4ECDC4]"
+                  className="text-[#8E9AAF] hover:text-[#4ECDC4] font-medium transition-colors text-sm cursor-pointer"
                 >
                   Keluar
-                </Button>
+                </button>
               </>
             ) : (
               <>
                 <Link to="/login">
-                  <Button variant="ghost" className="text-[#8E9AAF] hover:text-[#4ECDC4]">
+                  <button className="text-[#000000] font-medium transition-colors text-sm cursor-pointer">
                     Masuk
-                  </Button>
+                  </button>
                 </Link>
                 <Link to="/register">
-                  <Button 
-                    variant="primary" 
-                    className="bg-[#4ECDC4] text-white hover:bg-[#5F9EA0]"
-                  >
+                  <button className="text-[#000000] font-medium transition-colors text-sm cursor-pointer">
                     Daftar
-                  </Button>
+                  </button>
                 </Link>
               </>
             )}
