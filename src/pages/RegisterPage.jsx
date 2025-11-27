@@ -2,8 +2,18 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import useAuthStore from '../store/authStore';
+import api from '../services/api';
 import Button from '../components/common/Button';
 import { colors } from '../constants/styles';
+import { FaRulerVertical, FaWeight, FaCalendarAlt, FaBaby, FaWeightHanging } from 'react-icons/fa';
+import { GiBodyHeight, GiWeight, GiMale, GiFemale } from 'react-icons/gi';
+import { BsPersonStanding } from 'react-icons/bs';
+import { IoMale, IoFemale } from 'react-icons/io5';
+import { Weight } from 'lucide-react';
+
+import sadKhalisha from '../assets/images/sad_khalisha.png';
+import happyRico from '../assets/images/happy_rico.png';
+import sadAldi from '../assets/images/sad_aldi.png';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -23,6 +33,9 @@ const RegisterPage = () => {
   });
   
   const [validationError, setValidationError] = useState('');
+  const [genderSelected, setGenderSelected] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [apiError, setApiError] = useState('');
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -35,6 +48,8 @@ const RegisterPage = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
+        if (validationError) setValidationError('');
+    if (apiError) setApiError('');
   };
 
   const nextStep = () => {
@@ -42,16 +57,30 @@ const RegisterPage = () => {
       setValidationError('Mohon isi usia Anda');
       return;
     }
-    if (step === 3 && !formData.height) {
-      setValidationError('Mohon isi tinggi badan');
+    if (step === 2 && !genderSelected) {
+      setValidationError('Mohon pilih jenis kelamin');
       return;
     }
-    if (step === 4 && !formData.weight) {
-      setValidationError('Mohon isi berat badan');
-      return;
+    if (step === 3) {
+      if (!formData.height) {
+        setValidationError('Mohon isi tinggi badan');
+        return;
+      }
+      if (parseFloat(formData.height) < 100) {
+        setValidationError('Tinggi badan minimal 100 cm');
+        return;
+      }
     }
-    
     if (step === 4) {
+      if (!formData.weight) {
+        setValidationError('Mohon isi berat badan');
+        return;
+      }
+      if (parseFloat(formData.weight) < 10) {
+        setValidationError('Berat badan minimal 10 kg');
+        return;
+      }
+      
       const heightInMeters = parseFloat(formData.height) / 100;
       const bmi = (parseFloat(formData.weight) / (heightInMeters * heightInMeters)).toFixed(1);
       setBmiResult(bmi);
@@ -59,48 +88,133 @@ const RegisterPage = () => {
     
     setStep(prev => prev + 1);
     setValidationError('');
+    setApiError('');
   };
 
   const prevStep = () => {
     setStep(prev => prev - 1);
     setValidationError('');
+    setApiError('');
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setValidationError('');
+    const saveAssessment = async (token, userId) => {
+    try {
+      console.log('Menyimpan assessment data...', {
+        userId,
+        age: formData.age,
+        gender: formData.gender,
+        height: formData.height,
+        weight: formData.weight,
+        bmi: bmiResult
+      });
+
+            const heightInMeters = parseFloat(formData.height) / 100;
+      const bmi = (parseFloat(formData.weight) / (heightInMeters * heightInMeters)).toFixed(1);
+
+            let bmr;
+      if (formData.gender === 'male') {
+        bmr = 88.362 + (13.397 * formData.weight) + (4.799 * formData.height) - (5.677 * formData.age);
+      } else {
+        bmr = 447.593 + (9.247 * formData.weight) + (3.098 * formData.height) - (4.330 * formData.age);
+      }
+      
+            const activityFactor = 1.55;
+      const dailyCalories = Math.round(bmr * activityFactor);
+      
+            const proteinGrams = Math.round((dailyCalories * 0.25) / 4);
+      const carbsGrams = Math.round((dailyCalories * 0.5) / 4);
+      const fatGrams = Math.round((dailyCalories * 0.25) / 9);
+
+      const assessmentData = {
+        user_id: userId,
+        age: parseInt(formData.age),
+        gender: formData.gender,
+        height: parseFloat(formData.height),
+        weight: parseFloat(formData.weight),
+        bmi: parseFloat(bmi),
+        activity_level: "Moderate",
+        health_goal: "Maintain",
+        dietary_preference: "Halal",
+        daily_calorie_target: dailyCalories,
+        daily_protein_target: proteinGrams,
+        daily_carbs_target: carbsGrams,
+        daily_fat_target: fatGrams
+      };
+
+      console.log('Mengirim data assessment:', assessmentData);
+
+      const response = await api.post('/assessment', assessmentData, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      console.log('Response assessment:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error(' Assessment error:', error);
+      throw error;
+    }
+  };
+
+   const handleSubmit = async (e) => {
+  e.preventDefault();
+  setValidationError('');
+  setApiError('');
+  setIsSubmitting(true);
+
+  console.log('Memulai proses registrasi...');
 
     if (formData.password !== formData.confirmPassword) {
-      setValidationError('Password dan konfirmasi password tidak cocok');
-      return;
-    }
+    setValidationError('Password dan konfirmasi password tidak cocok');
+    setIsSubmitting(false);
+    return;
+  }
 
-    if (formData.password.length < 6) {
-      setValidationError('Password minimal 6 karakter');
-      return;
-    }
+  if (formData.password.length < 6) {
+    setValidationError('Password minimal 6 karakter');
+    setIsSubmitting(false);
+    return;
+  }
 
-    const registerData = {
+  try {
+    // 1. Register user
+    console.log('Register user...', {
+      name: formData.name,
+      email: formData.email,
+      password: formData.password
+    });
+
+        const response = await register({
       name: formData.name,
       email: formData.email,
       password: formData.password,
-      age: formData.age,
-      gender: formData.gender,
-      height: formData.height,
-      weight: formData.weight,
-      bmi: bmiResult,
-    };
+      password_confirmation: formData.confirmPassword
+    });
 
-    await register(registerData);
-    if (!error) {
-      navigate('/login');
+        const { user, authorization } = response.data;
+    const token = authorization.token;
+
+    if (!token) {
+      throw new Error('Gagal mendapatkan token autentikasi');
     }
-  };
+
+        await saveAssessment(token, user.id);
+
+        navigate('/dashboard');
+
+  } catch (error) {
+    console.error('Error during registration:', error);
+    setApiError(error.response?.data?.message || error.message || 'Terjadi kesalahan saat registrasi');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const getBmiCategory = (bmi) => {
     if (bmi < 18.5) return 'Kekurangan berat badan';
     if (bmi < 24.9) return 'Normal (Ideal)';
-    if (bmi < 29.9) return 'Kelebihan berat badan :(';
+    if (bmi < 29.9) return 'Kelebihan berat badan';
     return 'Obesitas';
   };
 
@@ -109,19 +223,33 @@ const RegisterPage = () => {
       case 1:
         return (
           <div className="space-y-6">
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">Berapa usia Anda?</h3>
-            <p className="text-gray-700 mb-6">Kami butuh informasi ini untuk rekomendasi yang tepat</p>
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
+                <FaBaby className="text-2xl text-green-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Berapa Usia Anda?</h3>
+            </div>
             
-            <input
-              type="number"
-              name="age"
-              value={formData.age}
-              onChange={handleChange}
-              className="w-full px-4 py-3 text-lg rounded-xl border border-green-300 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
-              placeholder="Masukkan usia"
-              required
-              autoFocus
-            />
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <FaBaby className="text-green-500" />
+              </div>
+              <input
+                type="number"
+                name="age"
+                value={formData.age}
+                onChange={handleChange}
+                className={`w-full pl-12 pr-4 py-4 text-lg rounded-xl border border-green-300 focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${inputNumberClass}`}
+                placeholder="Masukkan usia"
+                min="1"
+                max="120"
+                required
+                autoFocus
+              />
+              <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                <span className="text-green-600 font-medium">tahun</span>
+              </div>
+            </div>
             
             <Button
               type="button"
@@ -129,153 +257,316 @@ const RegisterPage = () => {
               className="w-full py-3 rounded-xl bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold mt-4"
               disabled={!formData.age}
             >
-              Lanjutkan
+              Selanjutnya
             </Button>
           </div>
         );
+      
       case 2:
         return (
           <div className="space-y-6">
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">Jenis kelamin Anda?</h3>
-            <p className="text-gray-700 mb-6">Pilih jenis kelamin untuk perhitungan yang akurat</p>
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
+                <BsPersonStanding className="text-2xl text-green-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Jenis Kelamin</h3>
+            </div>
             
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               {[
-                { label: 'Laki-laki', value: 'male' },
-                { label: 'Perempuan', value: 'female' }
+                { label: 'Laki-laki', value: 'male', icon: <IoMale className="text-3xl mb-1" /> },
+                { label: 'Perempuan', value: 'female', icon: <IoFemale className="text-3xl mb-1" /> }
               ].map((gender) => (
                 <button
                   key={gender.value}
                   type="button"
                   onClick={() => {
-                    setFormData(prev => ({...prev, gender: gender.value}));
-                    nextStep();
+                    setFormData(prev => ({
+                      ...prev, 
+                      gender: gender.value
+                    }));
+                    setGenderSelected(true);
                   }}
-                  className={`p-4 rounded-xl text-base font-semibold transition-all ${
+                  className={`p-6 rounded-xl text-center transition-all border-2 ${
                     formData.gender === gender.value
-                      ? 'bg-yellow-400 text-gray-900 shadow-md'
-                      : 'bg-white/40 text-gray-900 hover:bg-white/60'
+                      ? 'border-yellow-400 bg-yellow-50 shadow-md'
+                      : 'border-green-300 hover:border-green-400 bg-white'
                   }`}
                 >
-                  {gender.label}
+                  <div className="flex flex-col items-center">
+                    <div className={`p-3 rounded-full mb-2 ${
+                      formData.gender === gender.value 
+                        ? 'bg-yellow-100 text-yellow-600' 
+                        : 'bg-green-100 text-green-600'
+                    }`}>
+                      {gender.icon}
+                    </div>
+                    <span className="font-semibold text-gray-800">{gender.label}</span>
+                  </div>
                 </button>
               ))}
             </div>
+
+            {validationError && (
+              <div className="text-red-500 text-sm mt-2 text-center">{validationError}</div>
+            )}
             
-            <button
-              type="button"
-              onClick={prevStep}
-              className="text-gray-900 text-sm hover:underline font-semibold mt-2"
-            >
-              Kembali
-            </button>
+            <div className="flex space-x-3 pt-4">
+              <button
+                type="button"
+                onClick={prevStep}
+                className="flex-1 py-3 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold transition-colors"
+              >
+                Kembali
+              </button>
+              <button
+                type="button"
+                onClick={nextStep}
+                className="flex-1 py-3 rounded-xl bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!genderSelected}
+              >
+                Selanjutnya
+              </button>
+            </div>
           </div>
         );
+      
       case 3:
         return (
           <div className="space-y-6">
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">Tinggi badan Anda?</h3>
-            <p className="text-gray-700 mb-6">Dalam centimeter (cm)</p>
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
+                <GiBodyHeight className="text-2xl text-green-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Tinggi Badan</h3>
+            </div>
             
-            <input
-              type="number"
-              name="height"
-              value={formData.height}
-              onChange={handleChange}
-              className="w-full px-4 py-3 text-lg rounded-xl border border-green-300 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
-              placeholder="Masukkan tinggi badan anda"
-              required
-              autoFocus
-            />
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <GiBodyHeight className="text-green-500" />
+              </div>
+              <input
+                type="number"
+                name="height"
+                value={formData.height}
+                onChange={handleChange}
+                className={`w-full pl-12 pr-4 py-4 text-lg rounded-xl border border-green-300 focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${inputNumberClass}`}
+                placeholder="Masukkan Tinggi Badan"
+                min="100"
+                max="250"
+                required
+                autoFocus
+              />
+              <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                <span className="text-green-600 font-medium">cm</span>
+              </div>
+            </div>
             
-            <div className="flex space-x-3 mt-6">
+            <div className="text-sm text-gray-500 mt-1">
+              {formData.height && parseFloat(formData.height) < 100 && (
+                <span className="text-red-500">Tinggi badan minimal 100 cm</span>
+              )}
+              {formData.height && parseFloat(formData.height) > 250 && (
+                <span className="text-yellow-600">Tinggi badan maksimal 250 cm</span>
+              )}
+            </div>
+
+            {validationError && (
+              <div className="text-red-500 text-sm mt-2">{validationError}</div>
+            )}
+            
+            <div className="flex space-x-3 pt-4">
               <button
                 type="button"
                 onClick={prevStep}
-                className="flex-1 py-3 rounded-xl bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold"
+                className="flex-1 py-3 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold transition-colors"
               >
                 Kembali
               </button>
-              <Button
+              <button
                 type="button"
                 onClick={nextStep}
-                className="flex-1 py-3 rounded-xl bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold"
-                disabled={!formData.height}
+                className="flex-1 py-3 rounded-xl bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!formData.height || parseFloat(formData.height) < 100}
               >
-                Lanjutkan
-              </Button>
+                Selanjutnya
+              </button>
             </div>
           </div>
         );
+      
       case 4:
         return (
           <div className="space-y-6">
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">Berat badan Anda?</h3>
-            <p className="text-gray-700 mb-6">Dalam kilogram (kg)</p>
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
+                <Weight className="text-2xl text-green-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Berat Badan</h3>
+            </div>
             
-            <input
-              type="number"
-              name="weight"
-              value={formData.weight}
-              onChange={handleChange}
-              step="0.1"
-              className="w-full px-4 py-3 text-lg rounded-xl border border-green-300 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
-              placeholder="Masukkan berat badan anda"
-              required
-              autoFocus
-            />
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <FaWeightHanging className="text-green-500" />
+              </div>
+              <input
+                type="number"
+                name="weight"
+                value={formData.weight}
+                onChange={handleChange}
+                step="0.1"
+                min="10"
+                max="300"
+                className={`w-full pl-12 pr-4 py-4 text-lg rounded-xl border border-green-300 focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${inputNumberClass}`}
+                placeholder="Masukkan Berat Badan"
+                required
+                autoFocus
+              />
+              <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                <span className="text-green-600 font-medium">kg</span>
+              </div>
+            </div>
             
-            <div className="flex space-x-3 mt-6">
+            <div className="text-sm text-gray-500 mt-1">
+              {formData.weight && parseFloat(formData.weight) < 10 && (
+                <span className="text-red-500">Berat badan minimal 10 kg</span>
+              )}
+              {formData.weight && parseFloat(formData.weight) > 300 && (
+                <span className="text-yellow-600">Berat badan maksimal 300 kg</span>
+              )}
+            </div>
+
+            {validationError && (
+              <div className="text-red-500 text-sm mt-2">{validationError}</div>
+            )}
+            
+            <div className="flex space-x-3 pt-4">
               <button
                 type="button"
                 onClick={prevStep}
-                className="flex-1 py-3 rounded-xl bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold"
+                className="flex-1 py-3 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold transition-colors"
               >
                 Kembali
               </button>
-              <Button
+              <button
                 type="button"
                 onClick={nextStep}
-                className="flex-1 py-3 rounded-xl bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold"
-                disabled={!formData.weight}
+                className="flex-1 py-3 rounded-xl bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!formData.weight || parseFloat(formData.weight) < 10}
               >
                 Selanjutnya
-              </Button>
+              </button>
             </div>
           </div>
         );
+      
       case 5:
+        const bmiValue = parseFloat(bmiResult);
+        const bmiCategory = getBmiCategory(bmiValue);
+        
+        let statusColor, statusBg, statusText, statusMessage, statusImage;
+        
+        if (bmiValue < 18.5) {
+          statusColor = 'bg-blue-50 text-blue-700';
+          statusBg = 'from-blue-50 to-blue-100';
+          statusText = 'Kekurangan Berat Badan';
+          statusMessage = 'Sepertinya berat badanmu masih sedikit di bawah rata-rata :( tapi nggak apa-apa! Kita bisa pelan-pelan naik bareng-bareng. Kamu pasti bisa mencapai berat idealmu dengan cara yang sehat!';
+          statusImage = sadKhalisha;
+        } else if (bmiValue < 24.9) {
+          statusColor = 'bg-green-50 text-green-700';
+          statusBg = 'from-green-50 to-emerald-100';
+          statusText = 'Normal (Ideal)';
+          statusMessage = 'Wah, luar biasa! Berat badanmu sudah ideal! Mari pertahankan dengan pola hidup sehat dan seimbang. Kamu keren!';
+          statusImage = happyRico;
+        } else {
+          statusColor = 'bg-red-50 text-red-700';
+          statusBg = 'from-red-50 to-pink-100';
+          statusText = 'Obesitas';
+          statusMessage = 'Sepertinya tubuhmu butuh sedikit perhatian nih :( Tapi nggak apa-apa, kita perbaiki pelan-pelan bareng ya. Kamu pasti bisa mencapai kondisi terbaikmu!';
+          statusImage = sadAldi;
+        }
+
         return (
-          <div className="space-y-6 text-center">
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">Hasil BMI Anda</h3>
-            {/* <p className="text-gray-700 mb-6">Body Mass Index (BMI)</p> */}
-            
-            <div className="bg-white/40 backdrop-blur-sm p-6 rounded-xl border border-white/50">
-              <div className="text-4xl font-black mb-2 text-gray-900">{bmiResult}</div>
-              <div className="text-lg font-semibold text-gray-800">{getBmiCategory(parseFloat(bmiResult))}</div>
+          <motion.div 
+            className="space-y-4 px-4 py-4 max-w-md mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="text-center">
+              <div className="w-32 h-32 mx-auto mb-3 flex items-center justify-center">
+                <img 
+                  src={statusImage} 
+                  alt={statusText}
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">Hasil BMI Kamu</h2>
             </div>
             
-            <p className="text-gray-700 text-sm">
-              Kami akan membantu Anda mencapai berat badan ideal dengan program yang tepat.
-            </p>
-            
-            <Button
-              type="button"
-              onClick={nextStep}
-              className="w-full py-3 rounded-xl bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold"
+            <motion.div 
+              className="relative bg-white rounded-xl p-3 shadow-lg overflow-hidden border-2 border-green-100"
+              whileHover={{ scale: 1.01 }}
+              transition={{ type: 'spring', stiffness: 300 }}
             >
-              Buat Akun Saya
-            </Button>
+              <div className="absolute -top-8 -right-8 w-24 h-24 bg-green-200 rounded-full opacity-20"></div>
+              <div className="relative z-10">
+                <div className="text-center mb-2">
+                  <div className="text-4xl font-black text-gray-900 mb-2">{bmiResult}</div>
+                  <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${statusColor} border border-green-200`}>
+                    {statusText}
+                  </div>
+                </div>
+                
+                <div className="mt-4 mb-3">
+                  <div className="h-2.5 bg-green-100 rounded-full overflow-hidden border border-green-200">
+                    <div 
+                      className={`h-full bg-gradient-to-r from-green-400 to-emerald-500`}
+                      style={{
+                        width: `${Math.min(100, Math.max(5, (bmiValue / 40) * 100))}%`,
+                        transition: 'width 1s ease-in-out'
+                      }}
+                    ></div>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500 mt-1.5 px-1 font-medium">
+                    <span className="text-blue-500">Kurus</span>
+                    <span className="text-green-500">Normal</span>
+                    <span className="text-red-500">Obesitas</span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
             
-            <button
-              type="button"
-              onClick={prevStep}
-              className="text-gray-900 text-sm hover:underline font-semibold"
+            <motion.div 
+              className={`p-3 rounded-lg bg-gradient-to-r ${statusBg} border border-green-100`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
             >
-              Kembali
-            </button>
-          </div>
+              <p className="text-center text-gray-800 text-xs leading-relaxed">
+                {statusMessage}
+              </p>
+            </motion.div>
+            
+            <div className="flex space-x-3 pt-2">
+              <button
+                type="button"
+                onClick={prevStep}
+                className="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold transition-colors border border-gray-200 text-sm"
+              >
+                Kembali
+              </button>
+              <button
+                type="button"
+                onClick={nextStep}
+                className="flex-1 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-500 text-white font-semibold transition-all shadow-md hover:shadow-lg text-sm"
+              >
+                Selanjutnya
+              </button>
+            </div>
+          </motion.div>
         );
+
       case 6:
         return (
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -284,9 +575,9 @@ const RegisterPage = () => {
               <p className="text-gray-700">Isi data berikut untuk bergabung</p>
             </div>
 
-            {error && (
+            {(validationError || apiError) && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
-                {error}
+                {validationError || apiError}
               </div>
             )}
 
@@ -351,21 +642,24 @@ const RegisterPage = () => {
               <Button
                 type="submit"
                 className="flex-1 py-3 rounded-xl bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold"
-                disabled={isLoading}
+                disabled={isSubmitting}
               >
-                {isLoading ? 'Mendaftar...' : 'Daftar Sekarang'}
+                {isSubmitting ? 'Mendaftar...' : 'Daftar Sekarang'}
               </Button>
             </div>
           </form>
         );
+      
       default:
         return null;
     }
   };
 
+  const inputNumberClass = "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
+
   return (
     <div className="min-h-screen w-full flex flex-col md:flex-row bg-white relative overflow-hidden">
-      {/* LEFT SIDE - SAMA */}
+      {/* LEFT SIDE */}
       <div className="w-full md:w-1/2 relative flex flex-col justify-center p-10 md:pl-20 md:pr-16 min-h-[40vh] md:min-h-screen bg-[#DDF8E2] overflow-visible">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/40 to-transparent"></div>
         <div className="absolute top-0 right-0 w-[700px] h-[700px] bg-[#6CC384] rounded-full -translate-y-1/3 translate-x-1/3 blur-2xl opacity-30"></div>
@@ -392,7 +686,7 @@ const RegisterPage = () => {
 
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30 overflow-visible">
           <motion.img
-            src="/src/assets/food_1.png"
+            src="/src/assets/images/food_2.png"
             className="absolute w-60 h-60 object-cover rounded-full shadow-2xl z-20"
             style={{ left: '60%', bottom: '19%', transform: 'translateX(-50%)' }}
             animate={{ y: [3, -6, 3] }}
@@ -400,7 +694,7 @@ const RegisterPage = () => {
           />
 
           <motion.img
-            src="/src/assets/food_2.png"
+            src="/src/assets/images/food_2.png"
             className="absolute w-90 h-90 object-cover rounded-full shadow-2xl z-10"
             style={{ left: '62%', top: '20%', transform: 'translateX(-50%)' }}
             animate={{ y: [3, -3, 3] }}
@@ -408,7 +702,7 @@ const RegisterPage = () => {
           />
 
           <motion.img
-            src="/src/assets/food_2.png"
+            src="/src/assets/images/food_2.png"
             className="absolute w-64 h-64 object-cover rounded-full shadow-2xl z-20"
             style={{ left: '87%', top: '48%', transform: 'translate(-50%, -50%)' }}
             animate={{ y: [4, -5, 4] }}
@@ -435,10 +729,10 @@ const RegisterPage = () => {
         </svg>
       </div>
 
-      {/* RIGHT SIDE - UKURAN CARD DIKEMBALIKAN SEPERTI SEMULA */}
+      {/* RIGHT SIDE */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-6 md:pr-20 relative z-10 bg-[#6CC384]">
         <div className="w-full max-w-md bg-white/20 backdrop-blur-xl rounded-2xl p-8 shadow-xl border border-white/30">
-          {validationError && (
+          {validationError && step !== 6 && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-4">
               {validationError}
             </div>
