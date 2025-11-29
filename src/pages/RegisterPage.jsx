@@ -98,64 +98,51 @@ const RegisterPage = () => {
   };
 
     const saveAssessment = async (token, userId) => {
-    try {
-      console.log('Menyimpan assessment data...', {
-        userId,
-        age: formData.age,
-        gender: formData.gender,
-        height: formData.height,
-        weight: formData.weight,
-        bmi: bmiResult
-      });
+  try {
+    console.log('=== DEBUG SAVE ASSESSMENT ===');
+    console.log('Token:', token);
+    console.log('User ID:', userId);
 
-            const heightInMeters = parseFloat(formData.height) / 100;
-      const bmi = (parseFloat(formData.weight) / (heightInMeters * heightInMeters)).toFixed(1);
+    // Hitung BMI
+    const heightInMeters = parseFloat(formData.height) / 100;
+    const bmi = (parseFloat(formData.weight) / (heightInMeters * heightInMeters)).toFixed(1);
 
-            let bmr;
-      if (formData.gender === 'male') {
-        bmr = 88.362 + (13.397 * formData.weight) + (4.799 * formData.height) - (5.677 * formData.age);
-      } else {
-        bmr = 447.593 + (9.247 * formData.weight) + (3.098 * formData.height) - (4.330 * formData.age);
+    const assessmentData = {
+      user_id: userId,
+      age: parseInt(formData.age),
+      gender: formData.gender,
+      height: parseFloat(formData.height),
+      weight: parseFloat(formData.weight),
+      bmi: parseFloat(bmi),
+      activity_level: "Moderate",
+      health_goal: "Maintain", 
+      dietary_preference: "Halal",
+      daily_calorie_target: 2000, // Sementara fix dulu
+      daily_protein_target: 50,   // Sementara fix dulu
+      daily_carbs_target: 250,    // Sementara fix dulu
+      daily_fat_target: 67        // Sementara fix dulu
+    };
+
+    console.log('Assessment data to send:', assessmentData);
+
+    const response = await api.post('/assessment', assessmentData, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
       }
-      
-            const activityFactor = 1.55;
-      const dailyCalories = Math.round(bmr * activityFactor);
-      
-            const proteinGrams = Math.round((dailyCalories * 0.25) / 4);
-      const carbsGrams = Math.round((dailyCalories * 0.5) / 4);
-      const fatGrams = Math.round((dailyCalories * 0.25) / 9);
-
-      const assessmentData = {
-        user_id: userId,
-        age: parseInt(formData.age),
-        gender: formData.gender,
-        height: parseFloat(formData.height),
-        weight: parseFloat(formData.weight),
-        bmi: parseFloat(bmi),
-        activity_level: "Moderate",
-        health_goal: "Maintain",
-        dietary_preference: "Halal",
-        daily_calorie_target: dailyCalories,
-        daily_protein_target: proteinGrams,
-        daily_carbs_target: carbsGrams,
-        daily_fat_target: fatGrams
-      };
-
-      console.log('Mengirim data assessment:', assessmentData);
-
-      const response = await api.post('/assessment', assessmentData, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      console.log('Response assessment:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error(' Assessment error:', error);
-      throw error;
-    }
-  };
+    });
+    
+    console.log('Assessment response:', response);
+    return response.data;
+    
+  } catch (error) {
+    console.error('=== ASSESSMENT ERROR DETAILS ===');
+    console.error('Error message:', error.message);
+    console.error('Error response:', error.response);
+    console.error('Error config:', error.config);
+    throw error;
+  }
+};
 
    const handleSubmit = async (e) => {
   e.preventDefault();

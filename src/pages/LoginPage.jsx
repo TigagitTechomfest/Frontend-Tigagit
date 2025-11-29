@@ -1,21 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiMail, FiLock } from 'react-icons/fi';
+import { FiMail, FiLock, FiAlertCircle } from 'react-icons/fi';
 import useAuthStore from '../store/authStore';
 import Button from '../components/common/Button';
 import { colors } from '../constants/styles';
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuthStore();
+  const { login, isAuthenticated, isLoading, error } = useAuthStore(); // ✅ Tambahkan isLoading & error
 
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
 
-  // ❗ Disable animation on first load
   const [firstLoad, setFirstLoad] = useState(true);
 
   useEffect(() => {
@@ -24,7 +23,10 @@ const LoginPage = () => {
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated) navigate("/dashboard");
+    if (isAuthenticated) {
+      console.log('User authenticated, redirecting to dashboard...'); // ✅ DEBUG
+      navigate("/dashboard");
+    }
   }, [isAuthenticated, navigate]);
 
   const handleChange = (e) =>
@@ -32,7 +34,16 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await login(formData.email, formData.password);
+    console.log('Form submitted:', formData); // ✅ DEBUG
+    
+    try {
+      await login(formData.email, formData.password);
+      console.log('Login successful!'); // ✅ DEBUG
+      // Navigate akan dihandle oleh useEffect di atas
+    } catch (error) {
+      console.error('Login error in component:', error); // ✅ DEBUG
+      // Error sudah dihandle di store
+    }
   };
 
   const containerVariants = {
@@ -88,7 +99,7 @@ const LoginPage = () => {
           </p>
         </motion.div>
 
-        {/* FLOATING FOOD IMAGES (tetap animasi) */}
+        {/* FLOATING FOOD IMAGES */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30 overflow-visible">
           
           <motion.img
@@ -118,6 +129,7 @@ const LoginPage = () => {
         </div>
       </motion.div>
 
+      {/* WAVY DIVIDER */}
       <motion.div
         className="hidden md:block absolute left-1/2 h-full w-56 -ml-28 z-20"
         initial={firstLoad ? false : { opacity: 0, scaleX: 0 }}
@@ -140,6 +152,7 @@ const LoginPage = () => {
         </svg>
       </motion.div>
 
+      {/* RIGHT SIDE - LOGIN FORM */}
       <motion.div
         className="w-full md:w-1/2 flex items-center justify-center p-8 md:pr-20 relative z-10 bg-[#6CC384]"
         variants={itemVariants}
@@ -167,6 +180,21 @@ const LoginPage = () => {
             </p>
           </motion.div>
 
+          {/* ✅ ERROR MESSAGE */}
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-4 bg-red-500/20 backdrop-blur-lg border border-red-500/50 rounded-2xl flex items-start gap-3"
+            >
+              <FiAlertCircle className="text-red-700 text-xl mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-red-900 font-semibold text-sm">Login Gagal</p>
+                <p className="text-red-800 text-sm">{error}</p>
+              </div>
+            </motion.div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-7">
 
             <div>
@@ -182,6 +210,8 @@ const LoginPage = () => {
                   onChange={handleChange}
                   placeholder="email@gmail.com"
                   className="w-full bg-transparent text-gray-900 placeholder-gray-600 outline-none text-lg"
+                  disabled={isLoading}
+                  required
                 />
               </div>
             </div>
@@ -199,26 +229,41 @@ const LoginPage = () => {
                   onChange={handleChange}
                   placeholder="••••••••"
                   className="w-full bg-transparent text-gray-900 placeholder-gray-600 outline-none text-lg"
+                  disabled={isLoading}
+                  required
                 />
               </div>
             </div>
 
+            {/* ✅ LOADING STATE */}
             <Button
               type="submit"
+              disabled={isLoading}
               className="
                 w-full py-4 text-lg
                 bg-yellow-400 hover:bg-yellow-300
                 text-gray-900 font-bold
                 rounded-2xl shadow-md hover:shadow-xl
                 transition-all
+                disabled:opacity-50 disabled:cursor-not-allowed
               "
             >
-              Login
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Loading...
+                </span>
+              ) : (
+                'Login'
+              )}
             </Button>
           </form>
 
           <p className="mt-8 text-center text-gray-900 text-base">
-            Don’t have an account?{" "}
+            Don't have an account?{" "}
             <Link
               className="!text-green-700 font-extrabold underline hover:!text-green-900 no-underline"
               style={{ color: "#32794F" }}
@@ -227,7 +272,6 @@ const LoginPage = () => {
               Register
             </Link>
           </p>
-
 
         </motion.div>
       </motion.div>
