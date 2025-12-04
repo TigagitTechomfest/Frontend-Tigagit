@@ -4,21 +4,16 @@ import { motion } from 'framer-motion';
 import { Github, Linkedin } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import Button from '../common/Button';
 import fruithand from '../../assets/images/fruithand.png';
 import women from '../../assets/images/women.png';
-import brokoli from '../../assets/images/brokoli.png';
 import foodbg from '../../assets/images/foodbg.png';
 import rico from '../../assets/images/rico.png';
 import aldi from '../../assets/images/aldi.png';
 import khalisha from '../../assets/images/khalisha.png';
 import piring from '../../assets/images/piring.png';
 import maskot5 from '../../assets/images/maskot5.png';
-import food1 from '../../assets/food_1.png';
 import maskot6 from '../../assets/images/maskot6.png';
-import tomat from '../../assets/images/tomat.png';
-import garlic from '../../assets/images/garlic.png';
-import { mask } from 'framer-motion/client';
+
 const HeroSection = () => {
   const cards = [
     {
