@@ -203,7 +203,7 @@ const useAuthStore = create((set, get) => ({
         isAuthenticated: false 
       });
       
-      console.log('🗑️ Invalid token removed');
+      console.log('🗑 Invalid token removed');
       return false; 
     }
   },

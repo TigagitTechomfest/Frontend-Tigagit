@@ -84,7 +84,7 @@ const ProfilePage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#DFFAEB] flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-green-400 border-t-transparent rounded-full animate-spin"></div>
           <p className="text-xl text-gray-700">Memuat data...</p>
@@ -96,8 +96,9 @@ const ProfilePage = () => {
   const bmi = calculateBMI();
 
   return (
-    <div className="min-h-screen bg-[#DFFAEB] p-6 pt-32">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen p-6 pt-24">
+      {/* Tambahkan margin-top di sini untuk jarak dari navbar */}
+      <div className="max-w-6xl mx-auto mt-8">
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           
@@ -136,7 +137,7 @@ const ProfilePage = () => {
                         value={formData.name}
                         onChange={handleChange}
                         disabled={!isEditing}
-                        className="w-full pl-12 pr-4 py-3 bg-transparent rounded-2xl border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 disabled:opacity-70 text-lg transition-all"
+                        className="w-full pl-12 pr-4 py-3 bg-white rounded-2xl border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 disabled:opacity-70 text-lg transition-all"
                         required
                       />
                     </div>
@@ -154,7 +155,7 @@ const ProfilePage = () => {
                         value={formData.email}
                         onChange={handleChange}
                         disabled={true}
-                        className="w-full pl-12 pr-4 py-3 bg-transparent rounded-2xl border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 disabled:opacity-70 text-lg transition-all"
+                        className="w-full pl-12 pr-4 py-3 bg-white rounded-2xl border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 disabled:opacity-70 text-lg transition-all"
                       />
                     </div>
                   </div>
@@ -170,7 +171,7 @@ const ProfilePage = () => {
                         value={formData.height}
                         onChange={handleChange}
                         disabled={!isEditing}
-                        className="w-full px-4 py-3 bg-transparent rounded-2xl border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 disabled:opacity-70 text-lg transition-all"
+                        className="w-full px-4 py-3 bg-white rounded-2xl border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 disabled:opacity-70 text-lg transition-all"
                         required
                       />
                     </div>
@@ -184,7 +185,7 @@ const ProfilePage = () => {
                         value={formData.weight}
                         onChange={handleChange}
                         disabled={!isEditing}
-                        className="w-full px-4 py-3 bg-transparent rounded-2xl border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 disabled:opacity-70 text-lg transition-all"
+                        className="w-full px-4 py-3 bg-white rounded-2xl border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 disabled:opacity-70 text-lg transition-all"
                         required
                       />
                     </div>
@@ -201,7 +202,7 @@ const ProfilePage = () => {
                         value={formData.age}
                         onChange={handleChange}
                         disabled={!isEditing}
-                        className="w-full px-4 py-3 bg-transparent rounded-2xl border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 disabled:opacity-70 text-lg transition-all"
+                        className="w-full px-4 py-3 bg-white rounded-2xl border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 disabled:opacity-70 text-lg transition-all"
                         required
                       />
                     </div>
@@ -214,7 +215,7 @@ const ProfilePage = () => {
                         value={formData.gender}
                         onChange={handleChange}
                         disabled={!isEditing}
-                        className="w-full px-4 py-3 bg-transparent rounded-2xl border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 disabled:opacity-70 text-lg transition-all"
+                        className="w-full px-4 py-3 bg-white rounded-2xl border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 disabled:opacity-70 text-lg transition-all"
                       >
                         <option value="male">Laki-laki</option>
                         <option value="female">Perempuan</option>

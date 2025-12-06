@@ -1,26 +1,35 @@
+import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated } = useAuthStore();
-  const token = localStorage.getItem('token');
+  const { isAuthenticated, checkAuth } = useAuthStore();
+  const [isChecking, setIsChecking] = useState(true);
 
-  console.log('🛡️ ProtectedRoute - Checking access:', { 
-    isAuthenticated, 
-    hasToken: !!token,
-    tokenPreview: token ? `${token.substring(0, 20)}...` : 'null'
-  });
+  useEffect(() => {
+    const verify = async () => {
+      await checkAuth();
+      setIsChecking(false);
+    };
+    verify();
+  }, [checkAuth]);
 
-  if (!isAuthenticated && !token) {
-    console.log('❌ Access DENIED - Redirecting to /login');
+  // Loading screen during auth check
+  if (isChecking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-600">Loading...</p>
+      </div>
+    );
+  }
+
+  // If user is NOT authenticated → redirect to login
+  if (!isAuthenticated) {
+    console.log('Access DENIED - Redirecting to /login');
     return <Navigate to="/login" replace />;
   }
 
-  if (token && !isAuthenticated) {
-    console.log('⚠️ Token exists but not authenticated - allowing access');
-  }
-
-  console.log('✅ Access GRANTED');
+  console.log('Access GRANTED');
   return children;
 };
 
