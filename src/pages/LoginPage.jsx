@@ -1,26 +1,55 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiMail, FiLock, FiAlertCircle, FiEye, FiEyeOff } from 'react-icons/fi';
+import useAuthStore from '../store/authStore';
 
 const LoginPage = () => {
+  const navigate = useNavigate();
+  const { login, isLoading: authLoading } = useAuthStore();
+  
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleChange = (e) =>
+  const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    // Clear error when user types
+    if (error) setError("");
+  };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      setError("Demo mode - login disabled");
-    }, 1000);
+    setError("");
+
+    // Validations
+    if (!formData.email || !formData.password) {
+      setError("Email dan password harus diisi");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError("Format email tidak valid");
+      return;
+    }
+
+    try {
+      console.log('🔐 Attempting login...');
+      await login(formData.email, formData.password);
+      console.log('✅ Login successful, redirecting to dashboard...');
+      
+      // Redirect to dashboard after successful login
+      navigate('/dashboard');
+      
+    } catch (err) {
+      console.error('❌ Login failed:', err);
+      const errorMsg = err.response?.data?.message || err.message || 'Login gagal. Periksa email dan password Anda.';
+      setError(errorMsg);
+    }
   };
 
   return (
@@ -101,7 +130,7 @@ const LoginPage = () => {
               Selamat datang kembali
             </h1>
             <p className="text-1xl md:text-2xl text-gray-700">
-              Mulai lagi rutinitas sehatmu bersama Nut  riGo!
+              Mulai lagi rutinitas sehatmu bersama NutriGo!
             </p>
           </div>
 
@@ -170,7 +199,7 @@ const LoginPage = () => {
           </div>
         </motion.div>
 
-        {/* RIGHT SIDE - LOGIN FORM IN ROUNDED BOX (SUPER GEDE!) */}
+        {/* RIGHT SIDE - LOGIN FORM IN ROUNDED BOX */}
         <motion.div
           className="w-full lg:w-[55%] max-w-2xl"
           initial={{ opacity: 0, x: 50 }}
@@ -206,7 +235,7 @@ const LoginPage = () => {
               </motion.div>
             )}
 
-            <div className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="text-gray-700 font-semibold text-base mb-3 block">
                   Email Address
@@ -220,7 +249,8 @@ const LoginPage = () => {
                     onChange={handleChange}
                     placeholder="email@gmail.com"
                     className="w-full bg-transparent text-gray-900 placeholder-gray-400 outline-none text-lg"
-                    disabled={isLoading}
+                    disabled={authLoading}
+                    required
                   />
                 </div>
               </div>
@@ -238,12 +268,14 @@ const LoginPage = () => {
                     onChange={handleChange}
                     placeholder="••••••••"
                     className="w-full bg-transparent text-gray-900 placeholder-gray-400 outline-none text-lg"
-                    disabled={isLoading}
+                    disabled={authLoading}
+                    required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="ml-2 text-gray-400 hover:text-gray-600 transition-colors"
+                    disabled={authLoading}
                   >
                     {showPassword ? (
                       <FiEyeOff className="text-xl" />
@@ -258,6 +290,7 @@ const LoginPage = () => {
                   <a
                     href="#"
                     className="text-sm text-green-600 hover:text-green-700 font-semibold"
+                    onClick={(e) => e.preventDefault()}
                   >
                     Reset Password
                   </a>
@@ -265,14 +298,14 @@ const LoginPage = () => {
               </div>
 
               <button
-                onClick={handleSubmit}
-                disabled={isLoading}
+                type="submit"
+                disabled={authLoading}
                 className="w-full py-5 text-lg font-bold text-white rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 style={{ backgroundColor: '#F0B639' }}
-                onMouseEnter={(e) => !isLoading && (e.currentTarget.style.backgroundColor = '#E5A820')}
-                onMouseLeave={(e) => !isLoading && (e.currentTarget.style.backgroundColor = '#F0B639')}
+                onMouseEnter={(e) => !authLoading && (e.currentTarget.style.backgroundColor = '#E5A820')}
+                onMouseLeave={(e) => !authLoading && (e.currentTarget.style.backgroundColor = '#F0B639')}
               >
-                {isLoading ? (
+                {authLoading ? (
                   <span className="flex items-center justify-center gap-3">
                     <svg className="animate-spin h-6 w-6" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
@@ -284,13 +317,13 @@ const LoginPage = () => {
                   'Login'
                 )}
               </button>
-            </div>
+            </form>
 
             <p className="mt-8 text-center text-gray-600 text-base">
               Don't have an account?{" "}
               <a
-                className="text-green-600 font-bold hover:text-green-700 underline text-lg"
-                href="#"
+                className="text-green-600 font-bold hover:text-green-700 underline text-lg cursor-pointer"
+                onClick={() => navigate('/register')}
               >
                 Register
               </a>

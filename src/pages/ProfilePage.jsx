@@ -1,11 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
-import { User, Mail, Edit2, LogOut, Save, X, Camera, Upload } from 'lucide-react';
+import { User, Mail, Edit2, LogOut, Save, X, Camera } from 'lucide-react';
 import useUserStore from '../store/userStore';
 import useAuthStore from '../store/authStore';
 
 const ProfilePage = () => {
-  const { profile, assessment, fetchProfile, updateProfile, isLoading, error } = useUserStore();
-  const { user, logout } = useAuthStore();
+  const { 
+    profile, 
+    assessment, 
+    fetchProfile, 
+    updateProfile, 
+    updateProfileImage, 
+    updateWeight,
+    isLoading 
+  } = useUserStore();
+  const { logout } = useAuthStore();
   
   const [isEditing, setIsEditing] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -21,7 +29,6 @@ const ProfilePage = () => {
     weight: ''
   });
 
-  // Store original data for cancel
   const [originalData, setOriginalData] = useState({
     name: '',
     email: '',
@@ -29,43 +36,54 @@ const ProfilePage = () => {
   });
 
   useEffect(() => {
-    fetchProfile()
-      .then(data => {
-        console.log('Fetch successful:', data);
-      })
-      .catch(err => {
-        console.error('Fetch failed:', err);
-      });
+    fetchProfile().catch(err => console.error('Fetch failed:', err));
   }, [fetchProfile]);
 
   useEffect(() => {
     if (profile || assessment) {
       const newFormData = {
-        name: profile?.name || user?.name || '',
-        email: profile?.email || user?.email || '',
+        name: profile?.name || '',
+        email: profile?.email || '',
         weight: assessment?.weight || ''
       };
       
       setFormData(newFormData);
       setOriginalData(newFormData);
       
-      // Set profile image if exists
-      if (profile?.profile_image) {
-        setProfileImagePreview(profile.profile_image);
+      // Set profile image from API response
+      console.log('🖼️ Setting profile image...');
+      console.log('profile_image_url:', profile?.profile_image_url);
+      console.log('profile_image:', profile?.profile_image);
+      
+      if (profile?.profile_image_url) {
+        console.log('✅ Using profile_image_url:', profile.profile_image_url);
+        setProfileImagePreview(profile.profile_image_url);
+      } else if (profile?.profile_image) {
+        // Extract filename dari path
+        const filename = profile.profile_image.includes('/') 
+          ? profile.profile_image.split('/').pop() 
+          : profile.profile_image;
+        
+        // Pakai API endpoint untuk serve image (fix untuk Windows symlink issues)
+        const apiUrl = `http://127.0.0.1:8000/api/profile-image/${filename}`;
+        
+        console.log('✅ Using API URL:', apiUrl);
+        setProfileImagePreview(apiUrl);
+      } else {
+        console.log('⚠️ No profile image found');
+        setProfileImagePreview(null);
       }
     }
-  }, [profile, assessment, user]);
+  }, [profile, assessment]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         setUpdateError('File harus berupa gambar');
         return;
       }
       
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         setUpdateError('Ukuran file maksimal 5MB');
         return;
@@ -73,7 +91,6 @@ const ProfilePage = () => {
       
       setProfileImage(file);
       
-      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setProfileImagePreview(reader.result);
@@ -95,7 +112,6 @@ const ProfilePage = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
-    // Clear messages when user types
     setUpdateError('');
     setUpdateSuccess('');
   };
@@ -105,7 +121,6 @@ const ProfilePage = () => {
     setUpdateError('');
     setUpdateSuccess('');
     
-    // Validate weight
     const weightValue = parseFloat(formData.weight);
     if (isNaN(weightValue) || weightValue <= 0) {
       setUpdateError('Berat badan harus berupa angka positif');
@@ -113,7 +128,6 @@ const ProfilePage = () => {
       return;
     }
 
-    // Validate email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       setUpdateError('Format email tidak valid');
@@ -121,136 +135,66 @@ const ProfilePage = () => {
       return;
     }
 
-    // Validate name
     if (formData.name.trim().length < 2) {
       setUpdateError('Nama harus minimal 2 karakter');
       setIsUpdating(false);
       return;
     }
 
-    // Check what changed
     const hasNameChanged = formData.name !== originalData.name;
     const hasEmailChanged = formData.email !== originalData.email;
     const hasWeightChanged = formData.weight !== originalData.weight;
+    const hasImageChanged = profileImage !== null;
 
     try {
       let successMessages = [];
       let errorMessages = [];
 
-      // Update profile image if changed
-      if (profileImage) {
+      // Update profile (name & email)
+      if (hasNameChanged || hasEmailChanged) {
         try {
-          const formDataImg = new FormData();
-          formDataImg.append('profile_image', profileImage);
-          
-          const imageResponse = await fetch('http://127.0.0.1:8000/api/profile/image', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            },
-            body: formDataImg
+          await updateProfile({
+            name: formData.name,
+            email: formData.email
           });
-
-          if (imageResponse.ok) {
-            const imageResult = await imageResponse.json();
-            if (imageResult.success) {
-              successMessages.push('✓ Foto profil');
-            } else {
-              errorMessages.push('✗ Foto profil gagal diperbarui');
-            }
-          } else if (imageResponse.status === 404) {
-            errorMessages.push('✗ Foto profil (API belum tersedia - 404)');
-          } else {
-            errorMessages.push('✗ Foto profil gagal diperbarui');
-          }
+          if (hasNameChanged) successMessages.push('✓ Nama');
+          if (hasEmailChanged) successMessages.push('✓ Email');
         } catch (err) {
-          errorMessages.push('✗ Foto profil (API belum tersedia)');
+          errorMessages.push('✗ Profil gagal diperbarui');
         }
       }
 
-      // Update weight (API already exists)
+      // Update profile image
+      if (hasImageChanged) {
+        try {
+          // Pass name & email juga supaya backend validation pass
+          const result = await updateProfileImage(profileImage, {
+            name: formData.name,
+            email: formData.email
+          });
+          successMessages.push('✓ Foto profil');
+          
+          // Update preview dengan URL baru dari server
+          if (result.profile?.profile_image_url) {
+            setProfileImagePreview(result.profile.profile_image_url);
+          }
+        } catch (err) {
+          console.error('Image upload error:', err);
+          errorMessages.push('✗ Foto profil gagal diperbarui');
+        }
+      }
+
+      // Update weight
       if (hasWeightChanged) {
         try {
-          const weightResponse = await fetch('http://127.0.0.1:8000/api/assessment/weight', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            },
-            body: JSON.stringify({ weight: weightValue })
-          });
-
-          const weightResult = await weightResponse.json();
-          
-          if (weightResponse.ok && weightResult.success) {
-            successMessages.push('✓ Berat badan');
-          } else {
-            errorMessages.push('✗ Berat badan gagal diperbarui');
-          }
+          await updateWeight(weightValue);
+          successMessages.push('✓ Berat badan');
         } catch (err) {
           errorMessages.push('✗ Berat badan gagal diperbarui');
         }
       }
 
-      // Update name (API might not exist yet)
-      if (hasNameChanged) {
-        try {
-          const nameResponse = await fetch('http://127.0.0.1:8000/api/profile/name', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            },
-            body: JSON.stringify({ name: formData.name })
-          });
-
-          if (nameResponse.ok) {
-            const nameResult = await nameResponse.json();
-            if (nameResult.success) {
-              successMessages.push('✓ Nama');
-            } else {
-              errorMessages.push('✗ Nama (API belum tersedia)');
-            }
-          } else if (nameResponse.status === 404) {
-            errorMessages.push('✗ Nama (API belum tersedia - 404)');
-          } else {
-            errorMessages.push('✗ Nama gagal diperbarui');
-          }
-        } catch (err) {
-          errorMessages.push('✗ Nama (API belum tersedia)');
-        }
-      }
-
-      // Update email (API might not exist yet)
-      if (hasEmailChanged) {
-        try {
-          const emailResponse = await fetch('http://127.0.0.1:8000/api/profile/email', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            },
-            body: JSON.stringify({ email: formData.email })
-          });
-
-          if (emailResponse.ok) {
-            const emailResult = await emailResponse.json();
-            if (emailResult.success) {
-              successMessages.push('✓ Email');
-            } else {
-              errorMessages.push('✗ Email (API belum tersedia)');
-            }
-          } else if (emailResponse.status === 404) {
-            errorMessages.push('✗ Email (API belum tersedia - 404)');
-          } else {
-            errorMessages.push('✗ Email gagal diperbarui');
-          }
-        } catch (err) {
-          errorMessages.push('✗ Email (API belum tersedia)');
-        }
-      }
-
-      // Refresh profile data
+      // Refresh profile data to get latest from server
       await fetchProfile();
 
       // Show results
@@ -258,6 +202,7 @@ const ProfilePage = () => {
         setUpdateSuccess(`Berhasil diperbarui: ${successMessages.join(', ')}`);
         setIsEditing(false);
         setOriginalData(formData);
+        setProfileImage(null);
         setTimeout(() => setUpdateSuccess(''), 4000);
       } else if (successMessages.length > 0 && errorMessages.length > 0) {
         setUpdateSuccess(`Berhasil: ${successMessages.join(', ')}`);
@@ -283,7 +228,21 @@ const ProfilePage = () => {
   const handleCancel = () => {
     setFormData(originalData);
     setProfileImage(null);
-    setProfileImagePreview(profile?.profile_image || null);
+    
+    // Reset preview ke foto asli dari server
+    if (profile?.profile_image_url) {
+      setProfileImagePreview(profile.profile_image_url);
+    } else if (profile?.profile_image) {
+      // Extract filename dan pakai API URL (sama seperti di useEffect)
+      const filename = profile.profile_image.includes('/') 
+        ? profile.profile_image.split('/').pop() 
+        : profile.profile_image;
+      const apiUrl = `http://127.0.0.1:8000/api/profile-image/${filename}`;
+      setProfileImagePreview(apiUrl);
+    } else {
+      setProfileImagePreview(null);
+    }
+    
     setIsEditing(false);
     setUpdateError('');
     setUpdateSuccess('');
@@ -299,8 +258,7 @@ const ProfilePage = () => {
   const calculateBMI = () => {
     if (assessment?.height && assessment?.weight) {
       const heightInM = assessment.height / 100;
-      const calculatedBMI = (assessment.weight / (heightInM * heightInM)).toFixed(2);
-      return calculatedBMI;
+      return (assessment.weight / (heightInM * heightInM)).toFixed(2);
     }
     return assessment?.bmi?.toFixed(2) || '0';
   };
@@ -331,7 +289,6 @@ const ProfilePage = () => {
     <div className="min-h-screen p-6 pt-24">
       <div className="max-w-6xl mx-auto mt-8">
         
-        {/* Success Message */}
         {updateSuccess && (
           <div className="mb-6 p-4 bg-green-100 border-2 border-green-400 text-green-700 rounded-2xl flex items-center gap-3 animate-pulse">
             <svg className="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -341,7 +298,6 @@ const ProfilePage = () => {
           </div>
         )}
         
-        {/* Error Message */}
         {updateError && (
           <div className="mb-6 p-4 bg-red-100 border-2 border-red-400 text-red-700 rounded-2xl flex items-center gap-3">
             <svg className="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -353,7 +309,6 @@ const ProfilePage = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           
-          {/* Left Column - Profile Form */}
           <div className="space-y-6">
             <div>
               <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
@@ -362,7 +317,6 @@ const ProfilePage = () => {
               </h2>
 
               <div className="flex flex-col items-center justify-center text-center mb-8">
-                {/* Profile Image */}
                 <div className="relative group">
                   <input
                     ref={fileInputRef}
@@ -387,12 +341,21 @@ const ProfilePage = () => {
                         src={profileImagePreview} 
                         alt="Profile" 
                         className="w-full h-full object-cover"
+                        onLoad={() => {
+                          console.log('✅ Image loaded successfully:', profileImagePreview);
+                        }}
+                        onError={(e) => {
+                          console.error('❌ Image load error!');
+                          console.error('Failed URL:', profileImagePreview);
+                          console.error('Image element:', e.target);
+                          // Hide broken image dan tampilkan initial
+                          e.target.style.display = 'none';
+                        }}
                       />
                     ) : (
                       <span>{formData.name?.charAt(0).toUpperCase() || 'U'}</span>
                     )}
                     
-                    {/* Overlay when editing */}
                     {isEditing && (
                       <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
                         <div className="text-center">
@@ -415,7 +378,6 @@ const ProfilePage = () => {
               </div>
 
               <div className="space-y-4">
-                {/* Name Field */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Nama Pengguna:
@@ -438,7 +400,6 @@ const ProfilePage = () => {
                   </div>
                 </div>
 
-                {/* Email Field */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Email:
@@ -461,7 +422,6 @@ const ProfilePage = () => {
                   </div>
                 </div>
 
-                {/* Weight Field */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Berat Badan (kg):
@@ -483,7 +443,6 @@ const ProfilePage = () => {
                   />
                 </div>
 
-                {/* Info Note when editing */}
                 {isEditing && (
                   <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-700">
                     <p className="flex items-start gap-2">
@@ -492,14 +451,11 @@ const ProfilePage = () => {
                       </svg>
                       <span>
                         <strong>Tips:</strong> Klik foto profil untuk mengganti. Ukuran max 5MB. Format: JPG, PNG, GIF.
-                        <br/>
-                        <strong>Catatan:</strong> Jika ada field yang tidak berhasil diperbarui, kemungkinan API endpoint-nya belum tersedia di backend.
                       </span>
                     </p>
                   </div>
                 )}
 
-                {/* Action Buttons */}
                 <div className="flex gap-4 pt-4">
                   {isEditing ? (
                     <>
@@ -556,7 +512,6 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          {/* Right Column - BMI Data */}
           <div className="space-y-6">
             <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -608,7 +563,6 @@ const ProfilePage = () => {
               </div>
             </div>
 
-            {/* BMI Card */}
             <div className={`bg-white rounded-2xl p-8 text-center border-2 ${bmiCategory.bg} border-gray-200 hover:shadow-lg transition-shadow`}>
               <div className={`w-16 h-16 ${bmiCategory.bg} rounded-full flex items-center justify-center mx-auto mb-4`}>
                 <svg className={`w-8 h-8 ${bmiCategory.color}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -619,12 +573,10 @@ const ProfilePage = () => {
               <p className="text-5xl font-bold text-gray-800 mb-2">{bmi}</p>
               <p className={`text-lg font-semibold ${bmiCategory.color} mb-2`}>{bmiCategory.text}</p>
               <p className="text-xs text-gray-500">
-                {bmiValue => {
-                  if (parseFloat(bmi) < 18.5) return 'Disarankan menambah berat badan';
-                  if (parseFloat(bmi) < 25) return 'Berat badan ideal, pertahankan!';
-                  if (parseFloat(bmi) < 30) return 'Disarankan menurunkan berat badan';
-                  return 'Konsultasi dengan dokter dianjurkan';
-                }}
+                {parseFloat(bmi) < 18.5 ? 'Disarankan menambah berat badan' :
+                 parseFloat(bmi) < 25 ? 'Berat badan ideal, pertahankan!' :
+                 parseFloat(bmi) < 30 ? 'Disarankan menurunkan berat badan' :
+                 'Konsultasi dengan dokter dianjurkan'}
               </p>
             </div>
           </div>
