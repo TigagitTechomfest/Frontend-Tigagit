@@ -41,10 +41,11 @@ const useDiaryStore = create((set, get) => ({
         params: { date },
       });
 
-      const log = response.data.data;
-      console.log('📦 Daily log response:', log);
+      console.log('📦 Daily log response:', response.data);
 
-      if (!log) {
+      const log = response.data.data;
+
+      if (!log || !log.meal_entries || log.meal_entries.length === 0) {
         set({
           diaryEntries: [],
           totalDailyIntake: {
@@ -59,9 +60,9 @@ const useDiaryStore = create((set, get) => ({
       }
 
       // Normalize meal entries dari response
-      const entries = log.meal_entries || [];
-      const normalizedEntries = entries.map((entry, index) => ({
-        id: entry.id || `${date}-${entry.meal_type}-${index}`, // unique per entry
+      const normalizedEntries = log.meal_entries.map((entry, index) => ({
+        id: `${date}-${index}`, // unique identifier untuk frontend
+        meal_index: index, // index untuk update/delete di backend
         meal_type: entry.meal_type,
         food_id: entry.food_id,
         food_name: entry.food_name,
@@ -70,6 +71,7 @@ const useDiaryStore = create((set, get) => ({
         protein: entry.protein || 0,
         carbs: entry.carbs || 0,
         fat: entry.fat || 0,
+        date: date,
       }));
 
       const totals = log.total_daily_intake || {
@@ -119,7 +121,7 @@ const useDiaryStore = create((set, get) => ({
 
       // Update diary entries setelah add
       const { selectedDate } = get();
-      await get().fetchDiary(selectedDate);
+      await get().fetchDiary(mealData.date || selectedDate);
 
       set({ isLoading: false });
       return response.data.data;
@@ -134,22 +136,64 @@ const useDiaryStore = create((set, get) => ({
   },
 
   /**
-   * Remove makanan dari diary
-   * @param {number} entryId - meal entry id
+   * Edit kuantitas makanan di diary
+   * @param {number} mealIndex - index meal di array
+   * @param {string} date - tanggal diary
+   * @param {number} quantity - kuantitas baru (gram)
    */
-  removeFoodFromDiary: async (entryId) => {
+  editFoodFromDiary: async (mealIndex, date, quantity) => {
     set({ isLoading: true, error: null });
 
     try {
-      console.log('🗑️ Removing meal:', entryId);
+      console.log('✏️ Editing meal:', { date, meal_index: mealIndex, quantity });
 
-      await api.delete(`/daily-logs/meal/${entryId}`);
+      const payload = {
+        date: date,
+        meal_index: mealIndex,
+        quantity: parseInt(quantity),
+      };
+
+      const response = await api.put('/daily-logs/meal', payload);
+
+      console.log('✅ Meal updated:', response.data.data);
+
+      // Update diary entries setelah edit
+      await get().fetchDiary(date);
+
+      set({ isLoading: false });
+      return response.data.data;
+    } catch (err) {
+      console.error('❌ Edit meal error:', err);
+      set({
+        error: err.response?.data?.message || err.message || 'Failed to update meal',
+        isLoading: false,
+      });
+      throw err;
+    }
+  },
+
+  /**
+   * Remove makanan dari diary
+   * @param {number} mealIndex - index meal di array
+   * @param {string} date - tanggal diary
+   */
+  removeFoodFromDiary: async (mealIndex, date) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      console.log('🗑️ Removing meal:', { date, meal_index: mealIndex });
+
+      await api.delete('/daily-logs/meal', {
+        params: { 
+          date: date,
+          meal_index: mealIndex 
+        },
+      });
 
       console.log('✅ Meal removed');
 
       // Update diary entries setelah remove
-      const { selectedDate } = get();
-      await get().fetchDiary(selectedDate);
+      await get().fetchDiary(date);
 
       set({ isLoading: false });
     } catch (err) {
