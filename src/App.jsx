@@ -1,8 +1,16 @@
+// src/App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import ProtectedRoute from './routes/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+
+// ✨ IMPORT HALAMAN RESET PASSWORD YANG BARU
+import ResetPasswordPage from './pages/ResetPasswordPage';
+
+// ✨ IMPORT HALAMAN FORGOT PASSWORD YANG BARU (INI YANG KURANG!)
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+
 import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
 import HomePage from './pages/HomePage';
@@ -21,6 +29,13 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            
+            {/* ✨ ROUTE BARU: HALAMAN FORGOT PASSWORD (request reset link) */}
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            
+            {/* ✨ ROUTE INI UNTUK HALAMAN RESET PASSWORD DARI LINK EMAIL */}
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            
             <Route
               path="/dashboard"
               element={

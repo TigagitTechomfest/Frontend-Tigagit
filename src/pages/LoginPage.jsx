@@ -17,7 +17,6 @@ const LoginPage = () => {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    // Clear error when user types
     if (error) setError("");
   };
 
@@ -41,10 +40,7 @@ const LoginPage = () => {
       console.log('🔐 Attempting login...');
       await login(formData.email, formData.password);
       console.log('✅ Login successful, redirecting to dashboard...');
-      
-      // Redirect to dashboard after successful login
       navigate('/dashboard');
-      
     } catch (err) {
       console.error('❌ Login failed:', err);
       const errorMsg = err.response?.data?.message || err.message || 'Login gagal. Periksa email dan password Anda.';
@@ -61,7 +57,6 @@ const LoginPage = () => {
           viewBox="0 0 1440 800" 
           preserveAspectRatio="none"
         >
-          {/* Wave 1 - Lightest */}
           <motion.path
             d="M0,400 Q360,320 720,400 T1440,400 L1440,800 L0,800 Z"
             fill="#DEEDE0"
@@ -79,7 +74,6 @@ const LoginPage = () => {
             }}
           />
           
-          {/* Wave 2 - Medium */}
           <motion.path
             d="M0,450 Q360,370 720,450 T1440,450 L1440,800 L0,800 Z"
             fill="#DFFAEB"
@@ -97,7 +91,6 @@ const LoginPage = () => {
             }}
           />
           
-          {/* Wave 3 - Darkest */}
           <motion.path
             d="M0,500 Q360,420 720,500 T1440,500 L1440,800 L0,800 Z"
             fill="rgba(34, 197, 94, 0.08)"
@@ -138,16 +131,8 @@ const LoginPage = () => {
             <motion.div
               className="absolute w-60 h-60 md:w-60 md:h-60 lg:w-60 lg:h-60 rounded-full overflow-hidden shadow-2xl z-20"
               style={{ top: '10%', left: '-20%' }}
-              animate={{ 
-                rotate: [0, 360],
-              }}
-              transition={{
-                rotate: {
-                  duration: 20,
-                  repeat: Infinity,
-                  ease: "linear"
-                }
-              }}
+              animate={{ rotate: [0, 360] }}
+              transition={{ rotate: { duration: 20, repeat: Infinity, ease: "linear" }}}
             >
               <img
                 src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&h=500&fit=crop"
@@ -159,16 +144,8 @@ const LoginPage = () => {
             <motion.div
               className="absolute w-100 h-100 md:w-100 md:h-100 lg:w-80 lg:h-80 rounded-full overflow-hidden shadow-2xl z-10"
               style={{ top: '-20%', right: '0%' }}
-              animate={{ 
-                rotate: [0, -360],
-              }}
-              transition={{
-                rotate: {
-                  duration: 25,
-                  repeat: Infinity,
-                  ease: "linear"
-                }
-              }}
+              animate={{ rotate: [0, -360] }}
+              transition={{ rotate: { duration: 25, repeat: Infinity, ease: "linear" }}}
             >
               <img
                 src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&h=500&fit=crop"
@@ -179,16 +156,8 @@ const LoginPage = () => {
             <motion.div
               className="absolute w-45 h-45 md:w-45 md:h-45 lg:w-45 lg:h-45 rounded-full overflow-hidden shadow-2xl z-20"
               style={{ bottom: '-12%', left: '17%' }}
-              animate={{ 
-                rotate: [0, 360],
-              }}
-              transition={{
-                rotate: {
-                  duration: 18,
-                  repeat: Infinity,
-                  ease: "linear"
-                }
-              }}
+              animate={{ rotate: [0, 360] }}
+              transition={{ rotate: { duration: 18, repeat: Infinity, ease: "linear" }}}
             >
               <img
                 src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=500&h=500&fit=crop"
@@ -199,7 +168,7 @@ const LoginPage = () => {
           </div>
         </motion.div>
 
-        {/* RIGHT SIDE - LOGIN FORM IN ROUNDED BOX */}
+        {/* RIGHT SIDE - LOGIN FORM */}
         <motion.div
           className="w-full lg:w-[55%] max-w-2xl"
           initial={{ opacity: 0, x: 50 }}
@@ -285,15 +254,15 @@ const LoginPage = () => {
                   </button>
                 </div>
                 
-                {/* Reset Password Link */}
+                {/* Reset Password Link - Updated to navigate to new page */}
                 <div className="mt-2 text-right">
-                  <a
-                    href="#"
-                    className="text-sm text-green-600 hover:text-green-700 font-semibold"
-                    onClick={(e) => e.preventDefault()}
+                  <button 
+                    type="button" 
+                    onClick={() => navigate('/forgot-password')}
+                    className="font-medium text-green-600 hover:text-green-700 focus:outline-none transition-colors"
                   >
-                    Reset Password
-                  </a>
+                    Lupa password?
+                  </button>
                 </div>
               </div>
 
