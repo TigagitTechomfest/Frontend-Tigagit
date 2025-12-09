@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react';
 import Card from './Card';
 import useAiFeedbackStore from '../../store/aifeedbackStore';
+import Rico from '../../assets/images/happy_rico.png';
+import Aldi from '../../assets/images/sad_aldi.png';
+import khalisa from '../../assets/images/sad_khalisha.png';
+import SiAgit from '../../assets/images/SiAgit.png';
+
+
+
 
 const AiFeedbackCard = ({ date }) => {
   const { feedback, isLoading, error, fetchFeedback } = useAiFeedbackStore();
@@ -33,10 +40,16 @@ const AiFeedbackCard = ({ date }) => {
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="text-3xl">🤖</div>
+            <div className="w-20 h-20 flex-shrink-0">
+              <img
+                src={SiAgit}
+                alt="Happy Rico"
+                className="w-full h-full object-contain"
+              />
+            </div>
             <div>
-              <h3 className="text-xl font-bold text-gray-900">AI Insights</h3>
-              <p className="text-sm text-gray-600">Rekomendasi personal dari AI</p>
+              <h2 className="text-xl font-bold text-gray-900">SiAgit AI</h2>
+              <p className="text-sm text-gray-600">Saran dan masukan dari SiAgit Ai</p>
             </div>
           </div>
           <button
@@ -61,7 +74,13 @@ const AiFeedbackCard = ({ date }) => {
             {feedback.macro_analysis && (
               <div className="bg-white rounded-lg p-4">
                 <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <span>📊</span> Analisis Makronutrisi
+                  <div className="w-10 h-10 flex-shrink-0">
+                    <img
+                      src={Rico}
+                      alt="Happy Rico"
+                      className="w-full h-full object-contain"
+                    />
+                  </div> Analisis Makronutrisi
                 </h4>
                 {typeof feedback.macro_analysis === 'string' ? (
                   <ul className="space-y-2">
@@ -76,7 +95,7 @@ const AiFeedbackCard = ({ date }) => {
                   <ul className="space-y-2">
                     {Object.entries(feedback.macro_analysis).map(([key, value], idx) => (
                       <li key={idx} className="text-sm text-gray-700 flex items-start gap-2">
-                        <span className="text-amber-600 font-bold">•</span>
+                        <span className="text-yellow-600 font-bold">•</span>
                         <span><strong>{key}:</strong> {value}</span>
                       </li>
                     ))}
@@ -89,7 +108,13 @@ const AiFeedbackCard = ({ date }) => {
             {feedback.suggested_foods && (
               <div className="bg-white rounded-lg p-4">
                 <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <span>🍎</span> Makanan yang Disarankan
+                  <div className="w-10 h-10 flex-shrink-0">
+                    <img
+                      src={Aldi}
+                      alt="Happy Rico"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>Makanan yang Disarankan
                 </h4>
                 {Array.isArray(feedback.suggested_foods) && feedback.suggested_foods.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -109,8 +134,8 @@ const AiFeedbackCard = ({ date }) => {
                   </div>
                 ) : (
                   <p className="text-sm text-gray-600">
-                    {typeof feedback.suggested_foods === 'string' 
-                      ? feedback.suggested_foods 
+                    {typeof feedback.suggested_foods === 'string'
+                      ? feedback.suggested_foods
                       : 'Tidak ada saran makanan'}
                   </p>
                 )}
@@ -121,7 +146,13 @@ const AiFeedbackCard = ({ date }) => {
             {feedback.suggested_exercises && (
               <div className="bg-white rounded-lg p-4">
                 <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <span>💪</span> Olahraga yang Disarankan
+                   <div className="w-10 h-10 flex-shrink-0">
+                    <img
+                      src={khalisa}
+                      alt="Happy Rico"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>Olahraga yang Disarankan
                 </h4>
                 {Array.isArray(feedback.suggested_exercises) && feedback.suggested_exercises.length > 0 ? (
                   <div className="space-y-2">
@@ -155,8 +186,8 @@ const AiFeedbackCard = ({ date }) => {
                   </div>
                 ) : (
                   <p className="text-sm text-gray-600">
-                    {typeof feedback.suggested_exercises === 'string' 
-                      ? feedback.suggested_exercises 
+                    {typeof feedback.suggested_exercises === 'string'
+                      ? feedback.suggested_exercises
                       : 'Tidak ada saran olahraga'}
                   </p>
                 )}

@@ -71,7 +71,7 @@ const DashboardPage = () => {
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900 mb-6">Ringkasan Hari Ini</h2>
-                    
+
                     <div className="space-y-4">
                       <div className="flex justify-between items-center p-3 rounded-lg hover:bg-gray-50 transition-colors">
                         <span className="text-gray-700 font-medium">Target Kalori</span>
@@ -85,22 +85,6 @@ const DashboardPage = () => {
                         <span className="text-gray-700 font-medium">Sisa Kalori</span>
                         <span className="text-xl font-bold text-emerald-600">{Math.round(remainingCalories)} kkal</span>
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Quick Meal Stats */}
-                  <div className="grid grid-cols-3 gap-2 pt-4 border-t border-gray-200">
-                    <div className="text-center p-3 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors">
-                      <p className="text-2xl font-bold text-emerald-600">{meals.breakfast.length}</p>
-                      <p className="text-xs text-gray-600">Sarapan</p>
-                    </div>
-                    <div className="text-center p-3 bg-teal-50 rounded-lg hover:bg-teal-100 transition-colors">
-                      <p className="text-2xl font-bold text-teal-600">{meals.lunch.length}</p>
-                      <p className="text-xs text-gray-600">Siang</p>
-                    </div>
-                    <div className="text-center p-3 bg-cyan-50 rounded-lg hover:bg-cyan-100 transition-colors">
-                      <p className="text-2xl font-bold text-cyan-600">{meals.dinner.length + meals.snack.length}</p>
-                      <p className="text-xs text-gray-600">Malam</p>
                     </div>
                   </div>
                 </div>
@@ -147,7 +131,7 @@ const DashboardPage = () => {
               {/* Macro Breakdown */}
               <div className="mt-8 pt-8 border-t border-gray-200">
                 <h3 className="text-xl font-bold text-gray-900 mb-6">Breakdown Makronutrisi</h3>
-                
+
                 <div className="space-y-4 p-5 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border border-emerald-200">
                   {/* Protein */}
                   <div className="flex items-center gap-4 hover:scale-105 transition-transform duration-300">
@@ -234,20 +218,6 @@ const DashboardPage = () => {
                 </Link>
               </div>
             </Card>
-
-            <Card className="bg-white hover:shadow-lg transition-all duration-300">
-              <div>
-                <p className="text-sm font-semibold text-gray-600 mb-3">💡 Tips Nutrisi</p>
-                <p className="text-sm text-gray-700 leading-relaxed">
-                  {caloriesProgress < 50
-                    ? 'Mulai catat makanan Anda untuk tracking nutrisi yang lebih baik!'
-                    : caloriesProgress > 100
-                    ? 'Kalori Anda sudah terpenuhi, perhatikan konsumsi berikutnya!'
-                    : 'Nutrisi Anda seimbang hari ini, pertahankan konsistensinya!'}
-                </p>
-              </div>
-            </Card>
-
             <Link to="/progress">
               <button className="w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95">
                 📊 Lihat Progres
@@ -278,15 +248,14 @@ const DashboardPage = () => {
                 {Object.entries(meals).map(([mealType, mealEntries], idx) => (
                   <div
                     key={mealType}
-                    className={`p-4 bg-gradient-to-br ${
-                      mealType === 'breakfast'
+                    className={`p-4 bg-gradient-to-br ${mealType === 'breakfast'
                         ? 'from-emerald-50 to-emerald-100 border-l-4 border-emerald-500'
                         : mealType === 'lunch'
-                        ? 'from-teal-50 to-teal-100 border-l-4 border-teal-500'
-                        : mealType === 'dinner'
-                        ? 'from-cyan-50 to-cyan-100 border-l-4 border-cyan-500'
-                        : 'from-emerald-50 to-emerald-100 border-l-4 border-emerald-500'
-                    } rounded-lg hover:shadow-md transition-all duration-300 transform hover:scale-105 animate-slide-in`}
+                          ? 'from-teal-50 to-teal-100 border-l-4 border-teal-500'
+                          : mealType === 'dinner'
+                            ? 'from-cyan-50 to-cyan-100 border-l-4 border-cyan-500'
+                            : 'from-emerald-50 to-emerald-100 border-l-4 border-emerald-500'
+                      } rounded-lg hover:shadow-md transition-all duration-300 transform hover:scale-105 animate-slide-in`}
                     style={{ animationDelay: `${idx * 100}ms` }}
                   >
                     <div className="mb-3">
@@ -294,10 +263,10 @@ const DashboardPage = () => {
                         {mealType === 'breakfast'
                           ? '🍳 Sarapan'
                           : mealType === 'lunch'
-                          ? '🍽️ Makan Siang'
-                          : mealType === 'dinner'
-                          ? '🍴 Makan Malam'
-                          : '🍪 Cemilan'}
+                            ? '🍽️ Makan Siang'
+                            : mealType === 'dinner'
+                              ? '🍴 Makan Malam'
+                              : '🍪 Cemilan'}
                       </p>
                       <p className="text-2xl font-bold text-gray-800">{mealEntries.length}</p>
                     </div>
