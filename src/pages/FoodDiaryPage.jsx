@@ -12,6 +12,7 @@ const FoodDiaryPage = () => {
     selectedDate,
     fetchDiary,
     addFoodToDiary,
+    updateFoodInDiary,
     removeFoodFromDiary,
     isLoading,
     totalDailyIntake,
@@ -38,6 +39,8 @@ const FoodDiaryPage = () => {
   const [isAddingFood, setIsAddingFood] = useState(false);
   const [snackbar, setSnackbar] = useState({ show: false, message: '', type: 'error' });
   const [quantity, setQuantity] = useState('100');
+  const [editMode, setEditMode] = useState(false);
+  const [editingEntry, setEditingEntry] = useState(null);
 
   useEffect(() => {
     fetchDiary(selectedDate);
@@ -77,22 +80,51 @@ const FoodDiaryPage = () => {
     setIsAddingFood(true);
 
     try {
-      const foodWithQuantity = { ...selectedFood, quantity: parseInt(quantity) };
-      const preparedFood = await prepareFood(foodWithQuantity);
+      if (editMode && editingEntry) {
+        // Edit mode - update meal
+        await updateFoodInDiary({
+          mealIndex: editingEntry.meal_index,
+          quantity: parseInt(quantity),
+          date: editingEntry.date,
+        });
 
-      await addFoodToDiary({
-        foodId: preparedFood.foodId || preparedFood.id,
-        mealType: selectedMealType,
-        date: selectedDate,
-        quantity: parseInt(quantity),
-      });
+        setSnackbar({
+          show: true,
+          message: 'Makanan berhasil diupdate!',
+          type: 'success',
+        });
+      } else {
+        // Add mode - add new meal
+        const foodWithQuantity = { ...selectedFood, quantity: parseInt(quantity) };
+        const preparedFood = await prepareFood(foodWithQuantity);
+
+        await addFoodToDiary({
+          foodId: preparedFood.foodId || preparedFood.id,
+          mealType: selectedMealType,
+          date: selectedDate,
+          quantity: parseInt(quantity),
+        });
+
+        setSnackbar({
+          show: true,
+          message: 'Makanan berhasil ditambahkan!',
+          type: 'success',
+        });
+      }
 
       setSearchQuery('');
       setShowSearch(false);
       setSelectedFood(null);
+      setEditMode(false);
+      setEditingEntry(null);
       setIsAddingFood(false);
     } catch (err) {
-      console.error('Error adding food:', err);
+      console.error('Error saving food:', err);
+      setSnackbar({
+        show: true,
+        message: err.message || 'Gagal menyimpan makanan',
+        type: 'error',
+      });
       setIsAddingFood(false);
     }
   };
@@ -100,6 +132,45 @@ const FoodDiaryPage = () => {
   const handleQuantityCancel = () => {
     setShowQuantitySelector(false);
     setSelectedFood(null);
+    setEditMode(false);
+    setEditingEntry(null);
+  };
+
+  const handleEditEntry = (entry) => {
+    setEditingEntry(entry);
+    setEditMode(true);
+    setSelectedFood({
+      id: entry.food_id,
+      name: entry.food_name,
+      calories_per_100g: (entry.calories / entry.quantity) * 100,
+      protein_per_100g: (entry.protein / entry.quantity) * 100,
+      carbs_per_100g: (entry.carbs / entry.quantity) * 100,
+      fat_per_100g: (entry.fat / entry.quantity) * 100,
+    });
+    setQuantity(entry.quantity.toString());
+    setShowQuantitySelector(true);
+  };
+
+  const handleDeleteEntry = async (entry) => {
+    if (!window.confirm('Yakin ingin menghapus makanan ini?')) {
+      return;
+    }
+
+    try {
+      await removeFoodFromDiary(entry.meal_index, entry.date);
+      setSnackbar({
+        show: true,
+        message: 'Makanan berhasil dihapus!',
+        type: 'success',
+      });
+    } catch (err) {
+      console.error('Error deleting food:', err);
+      setSnackbar({
+        show: true,
+        message: err.message || 'Gagal menghapus makanan',
+        type: 'error',
+      });
+    }
   };
 
   const handleDateChange = (e) => {
@@ -120,34 +191,84 @@ const FoodDiaryPage = () => {
 
   const nutrition = calculateNutrition();
 
-  // Group entries by meal type
-  const meals = {
-    breakfast: {
-      label: '🍳 Sarapan',
-      entries: diaryEntries.filter((e) => e.meal_type === 'breakfast'),
-    },
-    lunch: {
-      label: '🍽️ Makan Siang',
-      entries: diaryEntries.filter((e) => e.meal_type === 'lunch'),
-    },
-    dinner: {
-      label: '🍴 Makan Malam',
-      entries: diaryEntries.filter((e) => e.meal_type === 'dinner'),
-    },
-    snack: {
-      label: '🍪 Cemilan',
-      entries: diaryEntries.filter((e) => e.meal_type === 'snack'),
-    },
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6 pt-24">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-6 pt-24">
       <div className="max-w-6xl mx-auto w-full">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Jurnal Makanan</h1>
           <p className="text-gray-600 mt-1">Catat makanan Anda hari ini</p>
         </div>
 
+
+
+        {/* Daily Summary */}
+        {diaryEntries.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            {/* Kalori Card */}
+            <Card className="bg-white border-none shadow-sm">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <p className="text-xs text-gray-600 font-medium mb-2">Total Kalori</p>
+                  <p className="text-3xl font-bold text-gray-900 mb-1">
+                    {Math.round(totalDailyIntake.calories).toLocaleString()}
+                  </p>
+                  <p className="text-sm text-gray-500">kcal</p>
+                </div>
+                <div className="w-12 h-12 rounded-xl bg-red-200 border border-red-300 flex items-center justify-center">
+                  <span className="text-2xl">🔥</span>
+                </div>
+              </div>
+            </Card>
+
+            {/* Karbohidrat Card - Icon Gandum */}
+            <Card className="bg-white border-none shadow-sm">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <p className="text-xs text-gray-600 font-medium mb-2">Total Karbo</p>
+                  <p className="text-3xl font-bold text-gray-900 mb-1">
+                    {Math.round(totalDailyIntake.carbs * 10) / 10}
+                  </p>
+                  <p className="text-sm text-gray-500">gr</p>
+                </div>
+                <div className="w-12 h-12 rounded-xl bg-green-200 border border-green-300 flex items-center justify-center">
+                  <span className="text-2xl">🍚 </span>
+                </div>
+              </div>
+            </Card>
+
+            {/* Protein Card - Icon Daging */}
+            <Card className="bg-white border-none shadow-sm">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <p className="text-xs text-gray-600 font-medium mb-2">Total Protein</p>
+                  <p className="text-3xl font-bold text-gray-900 mb-1">
+                    {Math.round(totalDailyIntake.protein * 10) / 10}
+                  </p>
+                  <p className="text-sm text-gray-500">gr</p>
+                </div>
+                <div className="w-12 h-12 rounded-xl bg-blue-100 border border-blue-200 flex items-center justify-center">
+                  <span className="text-2xl">🥩</span>
+                </div>
+              </div>
+            </Card>
+
+            {/* Lemak Card - Icon Alpukat */}
+            <Card className="bg-white border-none shadow-sm">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <p className="text-xs text-gray-600 font-medium mb-2">Total Lemak</p>
+                  <p className="text-3xl font-bold text-gray-900 mb-1">
+                    {Math.round(totalDailyIntake.fat * 10) / 10}
+                  </p>
+                  <p className="text-sm text-gray-500">gr</p>
+                </div>
+                <div className="w-12 h-12 rounded-xl bg-orange-100 border border-orange-200 flex items-center justify-center">
+                  <span className="text-2xl">🥑</span>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
         {/* Date Selector */}
         <Card className="mb-6">
           <div className="flex items-center justify-between">
@@ -172,42 +293,6 @@ const FoodDiaryPage = () => {
           </div>
         </Card>
 
-        {/* Daily Summary */}
-        {diaryEntries.length > 0 && (
-          <Card className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <p className="text-xs text-gray-600 uppercase tracking-wide">Kalori</p>
-                <p className="text-2xl font-bold text-red-600">
-                  {Math.round(totalDailyIntake.calories)}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">kkal</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600 uppercase tracking-wide">Protein</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {Math.round(totalDailyIntake.protein * 10) / 10}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">g</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600 uppercase tracking-wide">Karbohidrat</p>
-                <p className="text-2xl font-bold text-yellow-600">
-                  {Math.round(totalDailyIntake.carbs * 10) / 10}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">g</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600 uppercase tracking-wide">Lemak</p>
-                <p className="text-2xl font-bold text-orange-600">
-                  {Math.round(totalDailyIntake.fat * 10) / 10}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">g</p>
-              </div>
-            </div>
-          </Card>
-        )}
-
         {/* Food Search */}
         {showSearch && (
           <Card className="mb-6">
@@ -217,7 +302,7 @@ const FoodDiaryPage = () => {
                 <Input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Cari makanan (contoh: nasi goreng, ayam bakar)"
+                  placeholder="contoh: nasi goreng, ayam bakar"
                   className="flex-1"
                   disabled={isSearching}
                 />
@@ -247,11 +332,10 @@ const FoodDiaryPage = () => {
                     key={value}
                     type="button"
                     onClick={() => setSelectedMealType(value)}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                      selectedMealType === value
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${selectedMealType === value
+                      ? 'bg-teal-600 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
                   >
                     {label}
                   </button>
@@ -283,7 +367,7 @@ const FoodDiaryPage = () => {
                       variant="primary"
                       onClick={() => handleFoodSelected(food)}
                       disabled={isAddingFood || isFoodLoading}
-                      className="ml-4"
+                      className="ml-4 bg-teal-600 hover:bg-teal-700"
                     >
                       {isAddingFood ? 'Menambah...' : 'Tambah'}
                     </Button>
@@ -300,50 +384,150 @@ const FoodDiaryPage = () => {
           </Card>
         )}
 
-        {/* Food Diary Entries - Grid 2x2 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Food Diary Entries - Table View */}
+        <Card>
           {isLoading ? (
-            <Card>
-              <p className="text-center text-gray-500 py-8">Memuat diary...</p>
-            </Card>
+            <p className="text-center text-gray-500 py-8">Memuat diary...</p>
+          ) : diaryEntries.length === 0 ? (
+            <p className="text-center text-gray-500 py-8">
+              Belum ada catatan makanan untuk hari ini
+            </p>
           ) : (
-            Object.entries(meals).map(([mealType, { label, entries }]) => (
-              <Card key={mealType} title={label}>
-                {entries.length === 0 ? (
-                  <p className="text-gray-500 text-center py-4">
-                    Belum ada makanan untuk {label.toLowerCase()}
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {entries.map((entry) => (
-                      <div
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700">
+                      Tanggal & Waktu
+                    </th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700">
+                      Jenis Makan
+                    </th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700">
+                      Makanan
+                    </th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700">
+                      Jumlah
+                    </th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700">
+                      Kalori
+                    </th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700">
+                      Protein
+                    </th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700">
+                      Karbo
+                    </th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700">
+                      Lemak
+                    </th>
+                    <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">
+                      Aksi
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {diaryEntries.map((entry) => {
+                    const mealTypeLabels = {
+                      breakfast: 'Sarapan',
+                      lunch: 'Makan Siang',
+                      snack: 'Cemilan',
+                      dinner: 'Makan Malam',
+                    };
+
+                    const mealTypeStyles = {
+                      breakfast: {
+                        bg: 'bg-emerald-50',
+                        text: 'text-emerald-700',
+                        border: 'border-emerald-200',
+                        icon: '🍳',
+                      },
+                      lunch: {
+                        bg: 'bg-amber-50',
+                        text: 'text-amber-700',
+                        border: 'border-amber-200',
+                        icon: '🍽️',
+                      },
+                      snack: {
+                        bg: 'bg-orange-50',
+                        text: 'text-orange-700',
+                        border: 'border-orange-200',
+                        icon: '🍪',
+                      },
+                      dinner: {
+                        bg: 'bg-slate-50',
+                        text: 'text-slate-700',
+                        border: 'border-slate-200',
+                        icon: '🍴',
+                      },
+                    };
+
+                    const style = mealTypeStyles[entry.meal_type];
+
+                    return (
+                      <tr
                         key={entry.id}
-                        className="flex justify-between items-center p-4 bg-gray-50 rounded-lg"
+                        className="border-b border-gray-100 hover:bg-teal-50/30 transition-colors"
                       >
-                        <div className="flex-1">
-                          <p className="font-medium text-gray-900">
+                        <td className="py-5 px-6">
+                          <div className="text-sm text-gray-600">
+                            {new Date(entry.date).toLocaleDateString('id-ID')}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-0.5">-</div>
+                        </td>
+                        <td className="py-5 px-6">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium border ${style.bg} ${style.text} ${style.border}`}
+                          >
+                            <span className="text-sm">{style.icon}</span>
+                            {mealTypeLabels[entry.meal_type]}
+                          </span>
+                        </td>
+                        <td className="py-5 px-6">
+                          <p className="text-sm font-medium text-gray-900">
                             {entry.food_name}
                           </p>
-                          <p className="text-sm text-gray-600 mt-1">
-                            {Math.round(entry.calories)} kkal | P:{' '}
-                            {Math.round(entry.protein * 10) / 10}g | C:{' '}
-                            {Math.round(entry.carbs * 10) / 10}g | F:{' '}
-                            {Math.round(entry.fat * 10) / 10}g
-                          </p>
-                          {entry.quantity && (
-                            <p className="text-xs text-gray-500 mt-1">
-                              Jumlah: {entry.quantity}g
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </Card>
-            ))
+                        </td>
+                        <td className="py-5 px-6 text-sm text-gray-900">
+                          {entry.quantity || 100}g
+                        </td>
+                        <td className="py-5 px-6 text-sm font-bold text-gray-900">
+                          {Math.round(entry.calories)}
+                        </td>
+                        <td className="py-5 px-6 text-sm text-gray-900">
+                          {Math.round(entry.protein * 10) / 10}g
+                        </td>
+                        <td className="py-5 px-6 text-sm text-gray-900">
+                          {Math.round(entry.carbs * 10) / 10}g
+                        </td>
+                        <td className="py-5 px-6 text-sm text-gray-900">
+                          {Math.round(entry.fat * 10) / 10}g
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <div className="flex justify-center gap-2">
+                            <button
+                              onClick={() => handleEditEntry(entry)}
+                              className="text-emerald-600 hover:text-emerald-700 text-sm font-medium transition-colors"
+                            >
+                              Edit
+                            </button>
+                            <span className="text-gray-300">|</span>
+                            <button
+                              onClick={() => handleDeleteEntry(entry)}
+                              className="text-red-600 hover:text-red-700 text-sm font-medium transition-colors"
+                            >
+                              Hapus
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
-        </div>
+        </Card>
       </div>
 
       {/* Modal Backdrop */}
@@ -354,7 +538,9 @@ const FoodDiaryPage = () => {
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
               {selectedFood?.name}
             </h2>
-            <p className="text-sm text-gray-500 mb-6">Pilih jumlah porsi</p>
+            <p className="text-sm text-gray-500 mb-6">
+              {editMode ? 'Edit jumlah porsi' : 'Pilih jumlah porsi'}
+            </p>
 
             {/* Preset Quantities */}
             <div className="flex gap-2 mb-4">
@@ -362,11 +548,10 @@ const FoodDiaryPage = () => {
                 <button
                   key={q}
                   onClick={() => setQuantity(q.toString())}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                    quantity === q.toString()
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${quantity === q.toString()
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
                 >
                   {q}g
                 </button>
@@ -432,7 +617,13 @@ const FoodDiaryPage = () => {
                 disabled={isAddingFood}
                 className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:bg-blue-400"
               >
-                {isAddingFood ? 'Menambah...' : 'Tambah ke Diary'}
+                {isAddingFood
+                  ? editMode
+                    ? 'Mengupdate...'
+                    : 'Menambah...'
+                  : editMode
+                    ? 'Update Diary'
+                    : 'Tambah ke Diary'}
               </button>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import useAuthStore from '../../store/authStore';
-import LogoNutriGO from '../../assets/images/LogoNutriGO.png';
+import LogoWellNezt from '../../assets/images/Logo2.png';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -18,7 +18,7 @@ const Navbar = () => {
           {/* Logo */}
           <div className="flex items-center gap-2">
             <Link to="/" className="font-bold text-lg text-[#1A202C] hover:text-[#4ECDC4] transition-colors">
-              <img src={LogoNutriGO} alt="NutriGo Logo" className="w-30 h-30 object-contain" />
+              <img src={LogoWellNezt} alt="NutriGo Logo" className="w-30 h-30 object-contain" />
             </Link>
           </div>
 
