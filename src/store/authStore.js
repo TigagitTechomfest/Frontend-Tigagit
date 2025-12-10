@@ -1,3 +1,4 @@
+// src/store/authStore.js
 import { create } from 'zustand';
 import api from '../services/api';
 
@@ -160,53 +161,128 @@ const useAuthStore = create((set, get) => ({
 
   checkAuth: async () => {
     const token = localStorage.getItem('token');
-    
-    console.log('🔍 CHECK AUTH');
-    console.log('🔑 Token:', token ? 'EXISTS' : 'NOT FOUND');
-    
     if (!token) {
-      console.log('❌ No token - setting isAuthenticated = false');
-      set({ 
-        isAuthenticated: false, 
-        user: null, 
-        token: null 
-      });
-      return false;
+      set({ isAuthenticated: false, user: null, isLoading: false });
+      return null;
     }
 
+    set({ isLoading: true });
     try {
-      console.log('📡 Verifying token with /auth/me...');
+      // Set the auth token for this request
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
       const response = await api.get('/auth/me');
-      console.log('✅ Token is valid');
-      console.log('👤 User data:', response.data);
       
-      const user = response.data?.data || response.data?.user;
+      let user = response.data?.data || response.data;
       
-      set({ 
-        user, 
-        token, 
-        isAuthenticated: true 
+      if (!user) {
+        throw new Error('User data not found in response');
+      }
+      
+      set({
+        user,
+        token,
+        isAuthenticated: true,
+        isLoading: false,
+        error: null
       });
       
-      console.log('✅ isAuthenticated set to TRUE');
-      return true;
+      return user;
       
     } catch (error) {
-      console.error('❌ Token verification FAILED');
-      console.error('Error:', error.response?.data);
+      console.error('Auth check failed:', error);
       
-      // Token invalid/expired - hapus dan logout
+      // Clear invalid token
       localStorage.removeItem('token');
-      set({ 
-        user: null, 
-        token: null, 
-        isAuthenticated: false 
+      delete api.defaults.headers.common['Authorization'];
+      
+      set({
+        user: null,
+        token: null,
+        isAuthenticated: false,
+        isLoading: false,
+        error: 'Session expired. Please login again.'
       });
       
-      console.log('🗑 Invalid token removed');
-      return false; 
+      return null;
     }
   },
+  
+  forgotPassword: async (email) => {
+    set({ isLoading: true, error: null });
+    try {
+      console.log('🔐 Sending forgot password request for email:', email);
+      
+      const response = await api.post('/auth/forgot-password', { email });
+      
+      console.log('✅ Forgot password response:', response.data);
+      
+      set({ 
+        isLoading: false,
+        error: null 
+      });
+      
+      return response.data;
+      
+    } catch (error) {
+      console.error('❌ Forgot password error:', error);
+      
+      const errorMessage = error.response?.data?.message || 
+                         error.message || 
+                         'Gagal mengirim link reset password. Silakan coba lagi.';
+      
+      set({ 
+        error: errorMessage, 
+        isLoading: false 
+      });
+      
+      throw error;
+    }
+  },
+
+  // ✨✨✨ TAMBAHKAN METHOD INI ✨✨✨
+  resetPassword: async (data) => {
+    set({ isLoading: true, error: null });
+    try {
+      console.log('🔐 Sending reset password request:', {
+        token: data.token ? '✓ exists' : '✗ missing',
+        email: data.email,
+        password: data.password ? '✓ exists' : '✗ missing',
+      });
+      
+      const response = await api.post('/auth/reset-password', {
+        token: data.token,
+        email: data.email,
+        password: data.password,
+        password_confirmation: data.password_confirmation
+      });
+      
+      console.log('✅ Reset password response:', response.data);
+      
+      set({ 
+        isLoading: false,
+        error: null 
+      });
+      
+      return response.data;
+      
+    } catch (error) {
+      console.error('❌ Reset password error:', error);
+      console.error('❌ Error response:', error.response?.data);
+      
+      const errorMessage = error.response?.data?.message || 
+                         error.message || 
+                         'Gagal reset password. Link mungkin sudah kadaluarsa.';
+      
+      set({ 
+        error: errorMessage, 
+        isLoading: false 
+      });
+      
+      throw error;
+    }
+  },
+  // ✨✨✨ END OF NEW METHOD ✨✨✨
 }));
 
 export default useAuthStore;
