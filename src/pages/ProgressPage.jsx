@@ -5,21 +5,22 @@ import { id } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import useProgressStore from '../store/progressStore';
 import useUserStore from '../store/userStore';
+import ExerciseCard from '../components/common/ExerciseCard';
 
 const ProgressPage = () => {
   const navigate = useNavigate();
-  
+
   // Zustand stores
-  const { 
-    dailyProgress, 
-    isLoading, 
+  const {
+    dailyProgress,
+    isLoading,
     error,
-    fetchDailyProgress, 
-    getNutrientProgress, 
-    getNetCalories, 
-    getRemainingCalories 
+    fetchDailyProgress,
+    getNutrientProgress,
+    getNetCalories,
+    getRemainingCalories
   } = useProgressStore();
-  
+
   const { profile, assessment, fetchProfile } = useUserStore();
 
   // Fetch data on component mount
@@ -28,12 +29,12 @@ const ProgressPage = () => {
     console.log('📅 Fetching progress for:', today);
     console.log('👤 User profile:', profile);
     console.log('📊 User assessment:', assessment);
-    
+
     // Fetch profile jika belum ada
     if (!profile || !assessment) {
       fetchProfile();
     }
-    
+
     fetchDailyProgress(today);
   }, [fetchDailyProgress, fetchProfile]);
 
@@ -42,16 +43,16 @@ const ProgressPage = () => {
   const currentWeight = assessment?.weight || 0;
   const age = assessment?.age || 0;
   const gender = assessment?.gender || 'male';
-  
+
   // Data dari profile
   const initialWeight = profile?.initial_weight || assessment?.initial_weight || currentWeight;
   const goalWeight = profile?.goal_weight || assessment?.goal_weight || (currentWeight > 0 ? currentWeight - 5 : 0);
   const name = profile?.name || 'Pengguna';
-  
+
   const weightLoss = initialWeight - currentWeight;
   const weightRemaining = Math.max(0, currentWeight - goalWeight);
   const progressPercent = initialWeight > goalWeight && initialWeight > 0
-    ? Math.round((weightLoss / (initialWeight - goalWeight)) * 100) 
+    ? Math.round((weightLoss / (initialWeight - goalWeight)) * 100)
     : 0;
 
   // Calculate BMI
@@ -63,7 +64,7 @@ const ProgressPage = () => {
     }
     return assessment?.bmi?.toFixed(1) || '0';
   };
-  
+
   const bmi = calculateBMI();
 
   // BMI Status
@@ -79,8 +80,8 @@ const ProgressPage = () => {
   const bmiStatus = getBmiStatus(bmi);
 
   // Calculate days elapsed
-  const daysElapsed = profile?.created_at 
-    ? Math.ceil((new Date() - new Date(profile.created_at)) / (1000 * 60 * 60 * 24)) 
+  const daysElapsed = profile?.created_at
+    ? Math.ceil((new Date() - new Date(profile.created_at)) / (1000 * 60 * 60 * 24))
     : 0;
 
   // Get progress percentages
@@ -104,10 +105,6 @@ const ProgressPage = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4 flex items-center justify-center">
         <div className="text-center">
-          <div className="relative">
-            <div className="animate-spin rounded-full h-20 w-20 border-b-4 border-blue-600 mx-auto mb-4"></div>
-            <FaUtensils className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-blue-600 text-2xl" />
-          </div>
           <p className="text-gray-700 text-lg font-medium">Memuat progress hari ini...</p>
           <p className="text-gray-500 text-sm mt-2">Mengambil data dari server</p>
         </div>
@@ -118,7 +115,7 @@ const ProgressPage = () => {
   // Error State
   if (error && !dailyProgress) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-orange-50 p-4 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-6 pt-24">
         <div className="max-w-md w-full">
           <div className="bg-white rounded-2xl shadow-lg p-8 border-2 border-red-200">
             <div className="flex justify-center mb-4">
@@ -126,22 +123,22 @@ const ProgressPage = () => {
                 <FaExclamationTriangle className="text-red-600 text-4xl" />
               </div>
             </div>
-            
+
             <h2 className="text-2xl font-bold text-gray-800 text-center mb-2">
               Gagal Memuat Data
             </h2>
-            
+
             <p className="text-gray-600 text-center mb-4">
               Tidak dapat terhubung ke server
             </p>
-            
+
             <div className="bg-red-50 rounded-lg p-4 mb-6 border border-red-200">
               <p className="text-sm text-red-700 font-mono break-all">
                 {error}
               </p>
             </div>
 
-            <button 
+            <button
               onClick={() => {
                 const today = format(new Date(), 'yyyy-MM-dd');
                 fetchDailyProgress(today);
@@ -159,9 +156,9 @@ const ProgressPage = () => {
 
   // Main Content
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 pt-24 md:pt-28 lg:pt-32 px-4 md:px-6 lg:px-8 pb-24">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-6 pt-24">
       <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
-        
+
         {/* Personal Greeting */}
         <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6 border border-gray-100">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
@@ -251,7 +248,7 @@ const ProgressPage = () => {
         {/* Weight Loss Progress */}
         <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6 border border-gray-100">
           <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-4">Progres Penurunan Berat Badan</h2>
-          
+
           {isProfileComplete ? (
             <>
               <div className="mb-6">
@@ -263,14 +260,14 @@ const ProgressPage = () => {
                     {currentWeight} kg / {goalWeight} kg
                   </span>
                 </div>
-                
+
                 <div className="relative h-3 md:h-4 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
+                  <div
                     className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500"
                     style={{ width: `${Math.min(100, Math.max(0, progressPercent))}%` }}
                   ></div>
                 </div>
-                
+
                 <div className="flex justify-between mt-2 text-xs text-gray-500">
                   <span>{goalWeight} kg Target</span>
                   <span>{initialWeight} kg</span>
@@ -315,22 +312,6 @@ const ProgressPage = () => {
               <h2 className="text-lg md:text-xl font-bold text-gray-800">Progress Nutrisi Hari Ini</h2>
             </div>
 
-            {/* Calories Summary */}
-            <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-xl p-4 mb-4 md:mb-6 border border-orange-200">
-              <div className="flex justify-between items-center mb-2">
-                <div>
-                  <p className="text-xs md:text-sm text-gray-600">Kalori Bersih</p>
-                  <p className="text-2xl md:text-3xl font-bold text-orange-600">{netCalories}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs md:text-sm text-gray-600">Target</p>
-                  <p className="text-xl md:text-2xl font-bold text-gray-700">{dailyProgress.target.calories}</p>
-                </div>
-              </div>
-              <p className="text-xs md:text-sm text-gray-600">
-                Sisa: <span className="font-semibold text-gray-800">{remainingCalories}</span> kalori
-              </p>
-            </div>
 
             {/* Nutrient Breakdown */}
             <div className="space-y-3 md:space-y-4">
@@ -346,7 +327,7 @@ const ProgressPage = () => {
                   </span>
                 </div>
                 <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
+                  <div
                     className="h-full bg-orange-500 transition-all duration-500"
                     style={{ width: `${caloriesPercent}%` }}
                   ></div>
@@ -366,7 +347,7 @@ const ProgressPage = () => {
                   </span>
                 </div>
                 <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
+                  <div
                     className="h-full bg-red-500 transition-all duration-500"
                     style={{ width: `${proteinPercent}%` }}
                   ></div>
@@ -386,7 +367,7 @@ const ProgressPage = () => {
                   </span>
                 </div>
                 <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
+                  <div
                     className="h-full bg-blue-500 transition-all duration-500"
                     style={{ width: `${carbsPercent}%` }}
                   ></div>
@@ -406,7 +387,7 @@ const ProgressPage = () => {
                   </span>
                 </div>
                 <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
+                  <div
                     className="h-full bg-yellow-500 transition-all duration-500"
                     style={{ width: `${fatPercent}%` }}
                   ></div>
@@ -422,7 +403,7 @@ const ProgressPage = () => {
                   <div className="flex items-center gap-3">
                     <FaFire className="text-green-600 text-lg md:text-xl flex-shrink-0" />
                     <div>
-                      <p className="font-medium text-gray-700 text-sm md:text-base">Kalori Terbakar</p>
+                      <h3 className="font-medium text-gray-700 text-sm md:text-base">Kalori Terbakar</h3>
                       <p className="text-xs text-gray-500">Dari olahraga hari ini</p>
                     </div>
                   </div>
@@ -430,24 +411,7 @@ const ProgressPage = () => {
                 </div>
               </div>
             )}
-
-            {/* Exercises List */}
-            {dailyProgress.exercises && dailyProgress.exercises.length > 0 && (
-              <div className="mt-4 md:mt-6">
-                <h3 className="font-semibold text-gray-800 mb-3 text-sm md:text-base">Olahraga Hari Ini</h3>
-                <div className="space-y-2">
-                  {dailyProgress.exercises.map((exercise, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <FaDumbbell className="text-blue-600 flex-shrink-0" />
-                        <span className="text-sm text-gray-700">{exercise.name}</span>
-                      </div>
-                      <span className="text-sm font-medium text-gray-600">{exercise.calories_burned} kal</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <ExerciseCard />
           </div>
         ) : (
           <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100 text-center">
@@ -456,7 +420,7 @@ const ProgressPage = () => {
             <p className="text-gray-600 text-sm">Mulai catat makanan Anda hari ini!</p>
           </div>
         )}
-
+        
         {/* Weight History Table */}
         <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6 border border-gray-100">
           <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-4">Riwayat Berat Badan (7 Hari)</h2>
@@ -475,9 +439,9 @@ const ProgressPage = () => {
                     [...Array(7)].map((_, i) => (
                       <tr key={i} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                         <td className="py-3 px-2 md:px-4 text-xs md:text-sm text-gray-600">
-                          {new Date(Date.now() - i * 24 * 60 * 60 * 1000).toLocaleDateString('id-ID', { 
-                            day: 'numeric', 
-                            month: 'short' 
+                          {new Date(Date.now() - i * 24 * 60 * 60 * 1000).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short'
                           })}
                         </td>
                         <td className="py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-gray-800">

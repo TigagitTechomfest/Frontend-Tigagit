@@ -32,6 +32,12 @@ const useProgressStore = create((set, get) => ({
       throw error;
     }
   },
+
+  // Refresh progress data (dipanggil saat exercise baru ditambah)
+  refreshDailyProgress: async () => {
+    const today = format(new Date(), 'yyyy-MM-dd');
+    return get().fetchDailyProgress(today);
+  },
   
   // Helper to get progress percentage for a specific nutrient
   getNutrientProgress: (nutrient) => {

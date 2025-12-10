@@ -1,42 +1,34 @@
 // src/App.jsx
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import ProtectedRoute from './routes/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-
-// ✨ IMPORT HALAMAN RESET PASSWORD YANG BARU
 import ResetPasswordPage from './pages/ResetPasswordPage';
-
-// ✨ IMPORT HALAMAN FORGOT PASSWORD YANG BARU (INI YANG KURANG!)
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
-
 import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
 import HomePage from './pages/HomePage';
-import Navbar from './components/layout/Navbar';
+import Navbar from './components/layout/Navbar'; // ✅ Cukup import Navbar
 import Footer from './components/layout/Footer';
 import FoodDiaryPage from './pages/FoodDiaryPage';
 import ProgressPage from './pages/ProgressPage';
 
-// Buat component wrapper untuk akses useLocation
-function AppContent() {
-  const location = useLocation();
-  
+function App() {
   return (
     <Router>
       <div className="flex flex-col min-h-screen w-full">
+        {/* Navbar - Includes hamburger + sidebar untuk mobile */}
         <Navbar />
+        
+        {/* Main Content */}
         <main className="flex-1 w-full">
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             
-            {/* ✨ ROUTE BARU: HALAMAN FORGOT PASSWORD (request reset link) */}
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            
-            {/* ✨ ROUTE INI UNTUK HALAMAN RESET PASSWORD DARI LINK EMAIL */}
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             
             <Route
@@ -73,7 +65,6 @@ function AppContent() {
             />
           </Routes>
         </main>
-        <Footer />
       </div>
     </Router>
   );
