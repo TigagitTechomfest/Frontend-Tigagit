@@ -5,9 +5,7 @@ import Rico from '../../assets/images/happy_rico.png';
 import Aldi from '../../assets/images/sad_aldi.png';
 import khalisa from '../../assets/images/sad_khalisha.png';
 import SiAgit from '../../assets/images/SiAgit.png';
-
-
-
+import { AlertCircle } from 'lucide-react';
 
 const AiFeedbackCard = ({ date }) => {
   const { feedback, isLoading, error, fetchFeedback } = useAiFeedbackStore();
@@ -19,6 +17,7 @@ const AiFeedbackCard = ({ date }) => {
     }
   }, [date, fetchFeedback]);
 
+  // Loading state
   if (isLoading) {
     return (
       <Card className="bg-gradient-to-br from-amber-50 to-amber-100">
@@ -30,10 +29,57 @@ const AiFeedbackCard = ({ date }) => {
     );
   }
 
-  if (!feedback) {
-    return null;
+  // Error or empty state
+  if (error || !feedback) {
+    return (
+      <Card className="bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 hover:shadow-lg transition-all duration-300">
+        <div className="space-y-4">
+          {/* Header */}
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-20 h-20 flex-shrink-0">
+                <img
+                  src={SiAgit}
+                  alt="SiAgit AI"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">SiAgit AI</h2>
+                <p className="text-sm text-gray-600">Saran dan masukan dari SiAgit Ai</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Empty/Error Message */}
+          <div className="bg-white rounded-lg p-4 border border-amber-200">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-gray-700 font-medium text-sm mb-2">
+                  {error ? 'Terjadi kesalahan saat memuat feedback' : 'Isi jurnal dulu yuk!'}
+                </p>
+                <p className="text-gray-600 text-xs leading-relaxed">
+                  {error 
+                    ? 'Mohon coba lagi nanti. Jika masalah berlanjut, hubungi support.' 
+                    : 'SiAgit AI membutuhkan data makanan dan olahraga Anda untuk memberikan rekomendasi yang tepat. Mulai isi jurnal Anda sekarang untuk mendapatkan feedback personal dari AI.'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Call to action */}
+          <button
+            className="w-full px-4 py-2 bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 transition-colors text-sm"
+          >
+            Mulai Isi Jurnal →
+          </button>
+        </div>
+      </Card>
+    );
   }
 
+  // Normal state with feedback
   return (
     <Card className="bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 hover:shadow-lg transition-all duration-300">
       <div className="space-y-4">

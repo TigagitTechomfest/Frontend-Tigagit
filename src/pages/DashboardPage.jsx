@@ -1,8 +1,11 @@
+// ========== BAGIAN YANG BERUBAH ==========
+
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import useDiaryStore from '../store/diaryStore';
 import useUserStore from '../store/userStore';
 import useAiFeedbackStore from '../store/aifeedbackStore';
+import useProgressStore from '../store/progressStore'; // TAMBAH INI
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import AiFeedbackCard from '../components/common/AiFeedbackCard';
@@ -11,17 +14,31 @@ const DashboardPage = () => {
   const { diaryEntries, selectedDate, fetchDiary, isLoading } = useDiaryStore();
   const { profile, fetchProfile } = useUserStore();
   const { fetchFeedback } = useAiFeedbackStore();
+  const { dailyProgress, fetchDailyProgress } = useProgressStore(); // TAMBAH INI
   const [animateCards, setAnimateCards] = useState(false);
 
   useEffect(() => {
     fetchDiary(selectedDate);
     fetchProfile();
     fetchFeedback(selectedDate);
+    fetchDailyProgress(selectedDate); // TAMBAH INI
     setAnimateCards(true);
-  }, [selectedDate, fetchDiary, fetchProfile, fetchFeedback]);
+  }, [selectedDate, fetchDiary, fetchProfile, fetchFeedback, fetchDailyProgress]);
 
-  // Calculate daily totals
+  // ========== UBAH BAGIAN INI ==========
+  // Sebelumnya: const dailyTotals = useMemo(...)
+  // Sekarang: ambil dari dailyProgress.intake
   const dailyTotals = useMemo(() => {
+    if (dailyProgress) {
+      return {
+        calories: dailyProgress.intake.calories || 0,
+        protein: dailyProgress.intake.protein || 0,
+        carbs: dailyProgress.intake.carbs || 0,
+        fat: dailyProgress.intake.fat || 0,
+      };
+    }
+
+    // Fallback ke hitung manual jika dailyProgress belum tersedia
     return diaryEntries.reduce(
       (acc, entry) => {
         acc.calories += entry.calories || 0;
@@ -32,13 +49,20 @@ const DashboardPage = () => {
       },
       { calories: 0, protein: 0, carbs: 0, fat: 0 }
     );
-  }, [diaryEntries]);
+  }, [dailyProgress, diaryEntries]);
 
-  const targetCalories = profile?.targetCalories || 2000;
+  // ========== UBAH BAGIAN INI ==========
+  // Sebelumnya: const targetCalories = profile?.targetCalories || 2500;
+  // Sekarang: ambil dari dailyProgress.target
+  const targetCalories = dailyProgress?.target?.calories || profile?.targetCalories || 2500;
+  const targetProtein = dailyProgress?.target?.protein || 150;
+  const targetCarbs = dailyProgress?.target?.carbs || 250;
+  const targetFat = dailyProgress?.target?.fat || 65;
+
   const caloriesProgress = (dailyTotals.calories / targetCalories) * 100;
-  const proteinProgress = (dailyTotals.protein / 150) * 100;
-  const carbsProgress = (dailyTotals.carbs / 250) * 100;
-  const fatProgress = (dailyTotals.fat / 65) * 100;
+  const proteinProgress = (dailyTotals.protein / targetProtein) * 100;
+  const carbsProgress = (dailyTotals.carbs / targetCarbs) * 100;
+  const fatProgress = (dailyTotals.fat / targetFat) * 100;
 
   // Group entries by meal type
   const meals = {
@@ -132,15 +156,15 @@ const DashboardPage = () => {
               <div className="mt-8 pt-8 border-t border-gray-200">
                 <h3 className="text-xl font-bold text-gray-900 mb-6">Breakdown Makronutrisi</h3>
 
-                <div className="space-y-4 p-5 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border border-emerald-200">
-                  {/* Protein */}
+                <div className="space-y-4 p-5 bg-gradient-to-br from-white to-emerald-50 rounded-xl border border-green-200">
+                  {/* Protein - Red/Orange */}
                   <div className="flex items-center gap-4 hover:scale-105 transition-transform duration-300">
                     <span className="font-semibold text-gray-900 w-20">Protein</span>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 bg-emerald-200 rounded-full h-3 overflow-hidden">
+                        <div className="flex-1 bg-red-200 rounded-full h-3 overflow-hidden">
                           <div
-                            className="bg-gradient-to-r from-emerald-600 to-emerald-700 h-3 rounded-full transition-all duration-500"
+                            className="bg-gradient-to-r from-red-500 to-orange-500 h-3 rounded-full transition-all duration-500"
                             style={{ width: `${Math.min(proteinProgress, 100)}%` }}
                           ></div>
                         </div>
@@ -151,14 +175,14 @@ const DashboardPage = () => {
                     </div>
                   </div>
 
-                  {/* Carbs */}
+                  {/* Carbs - Blue/Purple */}
                   <div className="flex items-center gap-4 hover:scale-105 transition-transform duration-300">
                     <span className="font-semibold text-gray-900 w-20">Karbo</span>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 bg-emerald-200 rounded-full h-3 overflow-hidden">
+                        <div className="flex-1 bg-blue-200 rounded-full h-3 overflow-hidden">
                           <div
-                            className="bg-gradient-to-r from-emerald-600 to-emerald-700 h-3 rounded-full transition-all duration-500"
+                            className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-500"
                             style={{ width: `${Math.min(carbsProgress, 100)}%` }}
                           ></div>
                         </div>
@@ -169,14 +193,14 @@ const DashboardPage = () => {
                     </div>
                   </div>
 
-                  {/* Fat */}
+                  {/* Fat - Yellow/Amber */}
                   <div className="flex items-center gap-4 hover:scale-105 transition-transform duration-300">
                     <span className="font-semibold text-gray-900 w-20">Lemak</span>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 bg-emerald-200 rounded-full h-3 overflow-hidden">
+                        <div className="flex-1 bg-yellow-200 rounded-full h-3 overflow-hidden">
                           <div
-                            className="bg-gradient-to-r from-emerald-600 to-emerald-700 h-3 rounded-full transition-all duration-500"
+                            className="bg-gradient-to-r from-yellow-500 to-amber-500 h-3 rounded-full transition-all duration-500"
                             style={{ width: `${Math.min(fatProgress, 100)}%` }}
                           ></div>
                         </div>
@@ -249,12 +273,12 @@ const DashboardPage = () => {
                   <div
                     key={mealType}
                     className={`p-4 bg-gradient-to-br ${mealType === 'breakfast'
-                        ? 'from-emerald-50 to-emerald-100 border-l-4 border-emerald-500'
-                        : mealType === 'lunch'
-                          ? 'from-teal-50 to-teal-100 border-l-4 border-teal-500'
-                          : mealType === 'dinner'
-                            ? 'from-cyan-50 to-cyan-100 border-l-4 border-cyan-500'
-                            : 'from-emerald-50 to-emerald-100 border-l-4 border-emerald-500'
+                      ? 'from-emerald-50 to-emerald-100 border-l-4 border-emerald-500'
+                      : mealType === 'lunch'
+                        ? 'from-teal-50 to-teal-100 border-l-4 border-teal-500'
+                        : mealType === 'dinner'
+                          ? 'from-cyan-50 to-cyan-100 border-l-4 border-cyan-500'
+                          : 'from-emerald-50 to-emerald-100 border-l-4 border-emerald-500'
                       } rounded-lg hover:shadow-md transition-all duration-300 transform hover:scale-105 animate-slide-in`}
                     style={{ animationDelay: `${idx * 100}ms` }}
                   >
