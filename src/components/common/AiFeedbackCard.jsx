@@ -6,6 +6,7 @@ import Aldi from '../../assets/images/sad_aldi.png';
 import khalisa from '../../assets/images/sad_khalisha.png';
 import SiAgit from '../../assets/images/SiAgit.png';
 import { AlertCircle } from 'lucide-react';
+import ChatCard from './ChatCard';
 
 const AiFeedbackCard = ({ date }) => {
   const { feedback, isLoading, error, fetchFeedback } = useAiFeedbackStore();
@@ -45,7 +46,7 @@ const AiFeedbackCard = ({ date }) => {
                 />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900">SiAgit AI</h2>
+                <h2 className="text-xl font-bold text-gray-900">SiAgit FeedBack AI</h2>
                 <p className="text-sm text-gray-600">Saran dan masukan dari SiAgit Ai</p>
               </div>
             </div>
@@ -60,8 +61,8 @@ const AiFeedbackCard = ({ date }) => {
                   {error ? 'Terjadi kesalahan saat memuat feedback' : 'Isi jurnal dulu yuk!'}
                 </p>
                 <p className="text-gray-600 text-xs leading-relaxed">
-                  {error 
-                    ? 'Mohon coba lagi nanti. Jika masalah berlanjut, hubungi support.' 
+                  {error
+                    ? 'Mohon coba lagi nanti. Jika masalah berlanjut, hubungi support.'
                     : 'SiAgit AI membutuhkan data makanan dan olahraga Anda untuk memberikan rekomendasi yang tepat. Mulai isi jurnal Anda sekarang untuk mendapatkan feedback personal dari AI.'}
                 </p>
               </div>
@@ -192,7 +193,7 @@ const AiFeedbackCard = ({ date }) => {
             {feedback.suggested_exercises && (
               <div className="bg-white rounded-lg p-4">
                 <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                   <div className="w-10 h-10 flex-shrink-0">
+                  <div className="w-10 h-10 flex-shrink-0">
                     <img
                       src={khalisa}
                       alt="Happy Rico"
@@ -251,7 +252,10 @@ const AiFeedbackCard = ({ date }) => {
             Lihat Rekomendasi Lengkap →
           </button>
         )}
+        {/* Chat Card */}
+        <ChatCard />
       </div>
+
     </Card>
   );
 };
