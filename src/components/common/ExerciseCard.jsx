@@ -7,7 +7,7 @@ import { useExerciseStore } from '../../store/exerciseStore';
 import api from '../../services/api';
 import { format } from 'date-fns';
 
-const ExerciseCard = () => {
+const ExerciseCard = ({ burnedCalories = 0, onExerciseAdded }) => {
   const { loading, error, success, clearError, clearSuccess, addExercise } = useExerciseStore();
   
   const [expanded, setExpanded] = useState(false);
@@ -69,6 +69,11 @@ const ExerciseCard = () => {
         async () => {
           // Refresh dari BE setelah tambah
           await fetchExercises();
+          
+          // Trigger parent component untuk refresh daily progress
+          if (onExerciseAdded) {
+            onExerciseAdded();
+          }
         }
       );
 
