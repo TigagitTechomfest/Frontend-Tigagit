@@ -14,6 +14,7 @@ const ProtectedRoute = ({ children }) => {
     verify();
   }, [checkAuth]);
 
+  // Loading screen during auth check
   if (isChecking) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -22,6 +23,7 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
+  // If user is NOT authenticated → redirect to login
   if (!isAuthenticated) {
     console.log('Access DENIED - Redirecting to /login');
     return <Navigate to="/login" replace />;

@@ -5,7 +5,7 @@ import useAuthStore from '../store/authStore';
 import api from '../services/api';
 import Button from '../components/common/Button';
 import { colors } from '../constants/styles';
-import { FaBaby, FaWeightHanging } from 'react-icons/fa';
+import { FaBaby, FaWeightHanging, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { GiBodyHeight } from 'react-icons/gi';
 import { BsPersonStanding } from 'react-icons/bs';
 import { IoMale, IoFemale } from 'react-icons/io5';
@@ -35,6 +35,9 @@ const RegisterPage = () => {
   const [genderSelected, setGenderSelected] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState('');
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -150,6 +153,7 @@ const RegisterPage = () => {
     }
 
     try {
+      // register() mengembalikan response.data dari API
       const response = await register({
         name: formData.name,
         email: formData.email,
@@ -157,17 +161,46 @@ const RegisterPage = () => {
         password_confirmation: formData.confirmPassword
       });
 
-      const { user, authorization } = response.data;
-      const token = authorization.token;
+      // Log untuk debugging
+      console.log('✅ Register response:', response);
+
+      // Ekstrak user dan token dari berbagai kemungkinan struktur
+      const user = response.data?.user || response.user;
+      const token = 
+        response.data?.authorization?.token || 
+        response.authorization?.token || 
+        response.token;
 
       if (!token) {
+        console.error('❌ Token not found in response:', response);
         throw new Error('Gagal mendapatkan token autentikasi');
       }
 
-      await saveAssessment(token, user.id);
+      if (!user) {
+        console.error('❌ User not found in response:', response);
+        throw new Error('Data pengguna tidak ditemukan');
+      }
+
+      // Pastikan user.id ada (bisa jadi _id jika MongoDB)
+      const userId = user.id || user._id;
+      if (!userId) {
+        throw new Error('ID pengguna tidak valid');
+      }
+
+      // Simpan token ke localStorage (double check)
+      localStorage.setItem('token', token);
+
+      // Kirim assessment
+      await saveAssessment(token, userId);
+
       navigate('/dashboard');
     } catch (error) {
-      setApiError(error.response?.data?.message || error.message || 'Terjadi kesalahan saat registrasi');
+      console.error('❌ Registration or assessment error:', error);
+      setApiError(
+        error.response?.data?.message || 
+        error.message || 
+        'Terjadi kesalahan saat registrasi'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -179,6 +212,8 @@ const RegisterPage = () => {
     if (bmi < 29.9) return 'Kelebihan berat badan';
     return 'Obesitas';
   };
+  
+  const inputNumberClass = "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 
   const renderStep = () => {
     switch (step) {
@@ -565,28 +600,42 @@ const RegisterPage = () => {
                 />
               </div>
 
-              <div>
+              <div className="relative">
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-xl border border-green-300 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                  className="w-full px-4 py-3 pr-12 rounded-xl border border-green-300 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                   placeholder="Password (minimal 6 karakter)"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
               </div>
 
-              <div>
+              <div className="relative">
                 <input
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-xl border border-green-300 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                  className="w-full px-4 py-3 pr-12 rounded-xl border border-green-300 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                   placeholder="Konfirmasi password"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-gray-700"
+                >
+                  {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
               </div>
             </div>
 
@@ -614,53 +663,165 @@ const RegisterPage = () => {
     }
   };
 
-  const inputNumberClass = "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
-
   return (
-    <div className="min-h-screen w-full flex flex-col md:flex-row bg-white relative overflow-hidden">
-      {/* LEFT SIDE - TETAP SAMA */}
-      <div
-        className="hidden md:flex w-1/2 relative items-center justify-center p-10 lg:p-16 min-h-screen bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url('/src/assets/images/bg_food.png')` }}
-      >
-        <div className="absolute inset-0 bg-black/60"></div>
-        <div className="relative z-10 max-w-lg text-white text-center px-4">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight">
-            Investasi terbaik adalah investasi pada
-            <span className="text-[#4CAF87]"> kesehatan Anda.</span>
-          </h1>
-          <p className="mt-4 text-lg">
-            Mulai langkah sehatmu bersama NutriGo. Satu pilihan baik, setiap harinya.
-          </p>
-        </div>
-      </div>
-
-      {/* WAVE DIVIDER - TETAP SAMA */}
-      <div className="hidden md:block absolute left-1/2 h-full w-56 -ml-28 z-20">
-        <svg
-          className="h-full w-full"
-          viewBox="0 0 200 1000"
+    <div className="min-h-screen w-full flex items-center justify-center bg-white p-4 md:p-8 relative overflow-hidden">
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+        <svg 
+          className="absolute w-full h-full" 
+          viewBox="0 0 1440 800" 
           preserveAspectRatio="none"
-          style={{ filter: 'drop-shadow(-4px 0 4px rgba(0, 0, 0, 0.15))' }}
         >
-          <path
-            d="M 0 0 C 80 150, 140 250, 60 380 C -20 510, 180 620, 40 760 C -40 880, 160 950, 20 1100 L 200 1100 L 200 0 Z"
-            fill="#0D5C3D"
+          <motion.path
+            d="M0,400 Q360,320 720,400 T1440,400 L1440,800 L0,800 Z"
+            fill="#DEEDE0"
+            animate={{
+              d: [
+                "M0,400 Q360,320 720,400 T1440,400 L1440,800 L0,800 Z",
+                "M0,400 Q360,480 720,400 T1440,400 L1440,800 L0,800 Z",
+                "M0,400 Q360,320 720,400 T1440,400 L1440,800 L0,800 Z"
+              ]
+            }}
+            transition={{
+              duration: 8,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
+          
+          <motion.path
+            d="M0,450 Q360,370 720,450 T1440,450 L1440,800 L0,800 Z"
+            fill="#DFFAEB"
+            animate={{
+              d: [
+                "M0,450 Q360,370 720,450 T1440,450 L1440,800 L0,800 Z",
+                "M0,450 Q360,530 720,450 T1440,450 L1440,800 L0,800 Z",
+                "M0,450 Q360,370 720,450 T1440,450 L1440,800 L0,800 Z"
+              ]
+            }}
+            transition={{
+              duration: 10,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
+          
+          <motion.path
+            d="M0,500 Q360,420 720,500 T1440,500 L1440,800 L0,800 Z"
+            fill="rgba(34, 197, 94, 0.08)"
+            animate={{
+              d: [
+                "M0,500 Q360,420 720,500 T1440,500 L1440,800 L0,800 Z",
+                "M0,500 Q360,580 720,500 T1440,500 L1440,800 L0,800 Z",
+                "M0,500 Q360,420 720,500 T1440,500 L1440,800 L0,800 Z"
+              ]
+            }}
+            transition={{
+              duration: 12,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
           />
         </svg>
       </div>
 
-      {/* RIGHT SIDE - GANTI WARNA BACKGROUND MENJADI #0D5C3D (sama dengan wave) */}
-      <div className="w-full md:w-1/2 flex items-center justify-center p-6 md:p-8 lg:p-12 relative z-10 bg-[#0D5C3D]">
-        <div className="w-full max-w-md bg-white/20 backdrop-blur-xl rounded-2xl p-8 shadow-xl border border-white/30">
-          {validationError && step !== 6 && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-4">
-              {validationError}
-            </div>
-          )}
+      <div className="w-full max-w-7xl flex flex-col lg:flex-row gap-8 lg:gap-24 items-center relative z-10">
+        <motion.div
+          className="w-full lg:w-1/2 flex flex-col items-center lg:items-start"
+          initial={{ opacity: 0, x: -50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <div className="mb-40 text-center lg:text-left w-full">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 leading-tight mb-6">
+              Untuk memudahkan NutriGo membantumu dengan maksimal,
+            </h1>
+            <p className="text-1xl md:text-2xl text-gray-700">
+              isi dulu beberapa informasi tentang dirimu ya
+            </p>
+          </div>
 
-          {renderStep()}
-        </div>
+          <div className="relative w-full max-w-md h-[320px] mx-auto flex items-center justify-center">
+            <motion.div
+              className="absolute w-60 h-60 md:w-60 md:h-60 lg:w-60 lg:h-60 rounded-full overflow-hidden shadow-2xl z-20"
+              style={{ top: '10%', left: '-20%' }}
+              animate={{ 
+                rotate: [0, 360],
+              }}
+              transition={{
+                rotate: {
+                  duration: 20,
+                  repeat: Infinity,
+                  ease: "linear"
+                }
+              }}
+            >
+              <img
+                src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&h=500&fit=crop"
+                alt="Healthy salad bowl"
+                className="w-full h-full object-cover"
+              />
+            </motion.div>
+            
+            <motion.div
+              className="absolute w-100 h-100 md:w-100 md:h-100 lg:w-80 lg:h-80 rounded-full overflow-hidden shadow-2xl z-10"
+              style={{ top: '-20%', right: '0%' }}
+              animate={{ 
+                rotate: [0, -360],
+              }}
+              transition={{
+                rotate: {
+                  duration: 25,
+                  repeat: Infinity,
+                  ease: "linear"
+                }
+              }}
+            >
+              <img
+                src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&h=500&fit=crop"
+                alt="Colorful food bowl"
+                className="w-full h-full object-cover"
+              />
+            </motion.div>
+            
+            <motion.div
+              className="absolute w-45 h-45 md:w-45 md:h-45 lg:w-45 lg:h-45 rounded-full overflow-hidden shadow-2xl z-20"
+              style={{ bottom: '-12%', left: '17%' }}
+              animate={{ 
+                rotate: [0, 360],
+              }}
+              transition={{
+                rotate: {
+                  duration: 18,
+                  repeat: Infinity,
+                  ease: "linear"
+                }
+              }}
+            >
+              <img
+                src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=500&h=500&fit=crop"
+                alt="Healthy breakfast"
+                className="w-full h-full object-cover"
+              />
+            </motion.div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          className="w-full lg:w-[55%] max-w-2xl"
+          initial={{ opacity: 0, x: 50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2, duration: 0.6 }}
+        >
+          <div className="bg-white border-2 border-gray-200 rounded-3xl p-8 shadow-lg">
+            {validationError && step !== 6 && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-4">
+                {validationError}
+              </div>
+            )}
+
+            {renderStep()}
+          </div>
+        </motion.div>
       </div>
     </div>
   );

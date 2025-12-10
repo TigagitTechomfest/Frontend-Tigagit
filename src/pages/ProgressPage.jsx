@@ -166,7 +166,7 @@ const ProgressPage = () => {
         <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6 border border-gray-100">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-1">Hi, {name}!</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-1">Hi, {name}! 👋</h1>
               <p className="text-gray-600 text-sm md:text-base">Ini progress mu hari ini</p>
             </div>
             <div className="flex items-center gap-2 text-xs md:text-sm text-gray-500">
