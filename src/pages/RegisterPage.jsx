@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import useAuthStore from '../store/authStore';
 import api from '../services/api';
 import Button from '../components/common/Button';
 import { colors } from '../constants/styles';
-import { FaRulerVertical, FaWeight, FaCalendarAlt, FaBaby, FaWeightHanging } from 'react-icons/fa';
-import { GiBodyHeight, GiWeight, GiMale, GiFemale } from 'react-icons/gi';
+import { FaBaby, FaWeightHanging } from 'react-icons/fa';
+import { GiBodyHeight } from 'react-icons/gi';
 import { BsPersonStanding } from 'react-icons/bs';
 import { IoMale, IoFemale } from 'react-icons/io5';
 import { Weight } from 'lucide-react';
-
 import sadKhalisha from '../assets/images/sad_khalisha.png';
 import happyRico from '../assets/images/happy_rico.png';
 import sadAldi from '../assets/images/sad_aldi.png';
@@ -48,7 +47,7 @@ const RegisterPage = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
-        if (validationError) setValidationError('');
+    if (validationError) setValidationError('');
     if (apiError) setApiError('');
   };
 
@@ -97,106 +96,82 @@ const RegisterPage = () => {
     setApiError('');
   };
 
-    const saveAssessment = async (token, userId) => {
-  try {
-    console.log('=== DEBUG SAVE ASSESSMENT ===');
-    console.log('Token:', token);
-    console.log('User ID:', userId);
+  const saveAssessment = async (token, userId) => {
+    try {
+      const heightInMeters = parseFloat(formData.height) / 100;
+      const bmi = (parseFloat(formData.weight) / (heightInMeters * heightInMeters)).toFixed(1);
 
-    // Hitung BMI
-    const heightInMeters = parseFloat(formData.height) / 100;
-    const bmi = (parseFloat(formData.weight) / (heightInMeters * heightInMeters)).toFixed(1);
+      const assessmentData = {
+        user_id: userId,
+        age: parseInt(formData.age),
+        gender: formData.gender,
+        height: parseFloat(formData.height),
+        weight: parseFloat(formData.weight),
+        bmi: parseFloat(bmi),
+        activity_level: "Moderate",
+        health_goal: "Maintain", 
+        dietary_preference: "Halal",
+        daily_calorie_target: 2000,
+        daily_protein_target: 50,
+        daily_carbs_target: 250,
+        daily_fat_target: 67
+      };
 
-    const assessmentData = {
-      user_id: userId,
-      age: parseInt(formData.age),
-      gender: formData.gender,
-      height: parseFloat(formData.height),
-      weight: parseFloat(formData.weight),
-      bmi: parseFloat(bmi),
-      activity_level: "Moderate",
-      health_goal: "Maintain", 
-      dietary_preference: "Halal",
-      daily_calorie_target: 2000, // Sementara fix dulu
-      daily_protein_target: 50,   // Sementara fix dulu
-      daily_carbs_target: 250,    // Sementara fix dulu
-      daily_fat_target: 67        // Sementara fix dulu
-    };
+      const response = await api.post('/assessment', assessmentData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error('Assessment error:', error);
+      throw error;
+    }
+  };
 
-    console.log('Assessment data to send:', assessmentData);
-
-    const response = await api.post('/assessment', assessmentData, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    console.log('Assessment response:', response);
-    return response.data;
-    
-  } catch (error) {
-    console.error('=== ASSESSMENT ERROR DETAILS ===');
-    console.error('Error message:', error.message);
-    console.error('Error response:', error.response);
-    console.error('Error config:', error.config);
-    throw error;
-  }
-};
-
-   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setValidationError('');
-  setApiError('');
-  setIsSubmitting(true);
-
-  console.log('Memulai proses registrasi...');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setValidationError('');
+    setApiError('');
+    setIsSubmitting(true);
 
     if (formData.password !== formData.confirmPassword) {
-    setValidationError('Password dan konfirmasi password tidak cocok');
-    setIsSubmitting(false);
-    return;
-  }
-
-  if (formData.password.length < 6) {
-    setValidationError('Password minimal 6 karakter');
-    setIsSubmitting(false);
-    return;
-  }
-
-  try {
-    // 1. Register user
-    console.log('Register user...', {
-      name: formData.name,
-      email: formData.email,
-      password: formData.password
-    });
-
-        const response = await register({
-      name: formData.name,
-      email: formData.email,
-      password: formData.password,
-      password_confirmation: formData.confirmPassword
-    });
-
-        const { user, authorization } = response.data;
-    const token = authorization.token;
-
-    if (!token) {
-      throw new Error('Gagal mendapatkan token autentikasi');
+      setValidationError('Password dan konfirmasi password tidak cocok');
+      setIsSubmitting(false);
+      return;
     }
 
-        await saveAssessment(token, user.id);
+    if (formData.password.length < 6) {
+      setValidationError('Password minimal 6 karakter');
+      setIsSubmitting(false);
+      return;
+    }
 
-        navigate('/dashboard');
+    try {
+      const response = await register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        password_confirmation: formData.confirmPassword
+      });
 
-  } catch (error) {
-    console.error('Error during registration:', error);
-    setApiError(error.response?.data?.message || error.message || 'Terjadi kesalahan saat registrasi');
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+      const { user, authorization } = response.data;
+      const token = authorization.token;
+
+      if (!token) {
+        throw new Error('Gagal mendapatkan token autentikasi');
+      }
+
+      await saveAssessment(token, user.id);
+      navigate('/dashboard');
+    } catch (error) {
+      setApiError(error.response?.data?.message || error.message || 'Terjadi kesalahan saat registrasi');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const getBmiCategory = (bmi) => {
     if (bmi < 18.5) return 'Kekurangan berat badan';
@@ -268,10 +243,7 @@ const RegisterPage = () => {
                   key={gender.value}
                   type="button"
                   onClick={() => {
-                    setFormData(prev => ({
-                      ...prev, 
-                      gender: gender.value
-                    }));
+                    setFormData(prev => ({ ...prev, gender: gender.value }));
                     setGenderSelected(true);
                   }}
                   className={`p-6 rounded-xl text-center transition-all border-2 ${
@@ -646,78 +618,40 @@ const RegisterPage = () => {
 
   return (
     <div className="min-h-screen w-full flex flex-col md:flex-row bg-white relative overflow-hidden">
-      {/* LEFT SIDE */}
-      <div className="w-full md:w-1/2 relative flex flex-col justify-center p-10 md:pl-20 md:pr-16 min-h-[40vh] md:min-h-screen bg-[#DDF8E2] overflow-visible">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/40 to-transparent"></div>
-        <div className="absolute top-0 right-0 w-[700px] h-[700px] bg-[#6CC384] rounded-full -translate-y-1/3 translate-x-1/3 blur-2xl opacity-30"></div>
-
-        <div className="relative z-10 max-w-lg">
-          <h1 className="text-5xl font-bold text-gray-900 leading-tight">
-            {step <= 5 
-              ? <>Mari kita kenal<br /><span className="text-green-700">Anda lebih dekat</span></>
-              : <>Buat akun Anda<br /><span className="text-green-700">untuk melanjutkan</span></>
-            }
+      {/* LEFT SIDE - TETAP SAMA */}
+      <div
+        className="hidden md:flex w-1/2 relative items-center justify-center p-10 lg:p-16 min-h-screen bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url('/src/assets/images/bg_food.png')` }}
+      >
+        <div className="absolute inset-0 bg-black/60"></div>
+        <div className="relative z-10 max-w-lg text-white text-center px-4">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight">
+            Investasi terbaik adalah investasi pada
+            <span className="text-[#4CAF87]"> kesehatan Anda.</span>
           </h1>
-
-          <p className="mt-6 text-lg text-gray-700 font-medium">
-            {step === 5 && bmiResult
-              ? 'Kami akan membantu Anda mencapai berat badan ideal.'
-              : 'Perjalanan sehat dimulai dengan satu langkah sederhana.'
-            }
+          <p className="mt-4 text-lg">
+            Mulai langkah sehatmu bersama NutriGo. Satu pilihan baik, setiap harinya.
           </p>
-
-          <p className="mt-2 text-gray-600">
-            Bergabunglah dengan NutriGo dan raih hidup lebih sehat.
-          </p>
-        </div>
-
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30 overflow-visible">
-          <motion.img
-            src="/src/assets/images/food_2.png"
-            className="absolute w-60 h-60 object-cover rounded-full shadow-2xl z-20"
-            style={{ left: '60%', bottom: '19%', transform: 'translateX(-50%)' }}
-            animate={{ y: [3, -6, 3] }}
-            transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
-          />
-
-          <motion.img
-            src="/src/assets/images/food_2.png"
-            className="absolute w-90 h-90 object-cover rounded-full shadow-2xl z-10"
-            style={{ left: '62%', top: '20%', transform: 'translateX(-50%)' }}
-            animate={{ y: [3, -3, 3] }}
-            transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
-          />
-
-          <motion.img
-            src="/src/assets/images/food_2.png"
-            className="absolute w-64 h-64 object-cover rounded-full shadow-2xl z-20"
-            style={{ left: '87%', top: '48%', transform: 'translate(-50%, -50%)' }}
-            animate={{ y: [4, -5, 4] }}
-            transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
-          />
         </div>
       </div>
 
-      {/* WAVE DIVIDER */}
+      {/* WAVE DIVIDER - TETAP SAMA */}
       <div className="hidden md:block absolute left-1/2 h-full w-56 -ml-28 z-20">
-        <svg className="h-full w-full" viewBox="0 0 200 1000" preserveAspectRatio="none">
+        <svg
+          className="h-full w-full"
+          viewBox="0 0 200 1000"
+          preserveAspectRatio="none"
+          style={{ filter: 'drop-shadow(-4px 0 4px rgba(0, 0, 0, 0.15))' }}
+        >
           <path
-            d="
-              M 0 0
-              C 80 150, 140 250, 60 380
-              C -20 510, 180 620, 40 760
-              C -40 880, 160 950, 20 1100
-              L 200 1100
-              L 200 0
-              Z
-            "
-            fill={colors.primary}
+            d="M 0 0 C 80 150, 140 250, 60 380 C -20 510, 180 620, 40 760 C -40 880, 160 950, 20 1100 L 200 1100 L 200 0 Z"
+            fill="#0D5C3D"
           />
         </svg>
       </div>
 
-      {/* RIGHT SIDE */}
-      <div className="w-full md:w-1/2 flex items-center justify-center p-6 md:pr-20 relative z-10 bg-[#6CC384]">
+      {/* RIGHT SIDE - GANTI WARNA BACKGROUND MENJADI #0D5C3D (sama dengan wave) */}
+      <div className="w-full md:w-1/2 flex items-center justify-center p-6 md:p-8 lg:p-12 relative z-10 bg-[#0D5C3D]">
         <div className="w-full max-w-md bg-white/20 backdrop-blur-xl rounded-2xl p-8 shadow-xl border border-white/30">
           {validationError && step !== 6 && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-4">

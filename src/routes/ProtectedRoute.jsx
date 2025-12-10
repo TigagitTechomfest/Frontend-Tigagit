@@ -22,7 +22,13 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  if (!isAuthenticated) {
+    console.log('Access DENIED - Redirecting to /login');
+    return <Navigate to="/login" replace />;
+  }
+
+  console.log('Access GRANTED');
+  return children;
 };
 
 export default ProtectedRoute;
