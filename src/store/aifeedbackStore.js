@@ -1,111 +1,145 @@
 import { create } from 'zustand';
 import api from '../services/api';
-import { format } from 'date-fns';
 
 const useAiFeedbackStore = create((set, get) => ({
   // ============= STATE =============
   feedback: null,
+  feedbackByDate: {}, // { [date]: feedbackData }
   isLoading: false,
   error: null,
-  feedbackGenerated: false,
 
   // ============= ACTIONS =============
 
   /**
-   * Generate AI Feedback untuk tanggal tertentu
+   * ✅ FETCH FEEDBACK - Backend akan handle caching/regeneration
+   * FE hanya perlu request, BE yang decide mau return cache atau generate baru
    * @param {string} date - format: YYYY-MM-DD
+   * @param {boolean} forceRegenerate - paksa generate ulang (optional)
    */
-  generateDailyFeedback: async (date) => {
+  fetchFeedback: async (date, forceRegenerate = false) => {
     set({ isLoading: true, error: null });
 
     try {
-      console.log('🤖 Generating AI feedback for:', date);
+      const endpoint = forceRegenerate ? '/feedback/regenerate' : '/feedback/daily';
 
-      const response = await api.post('/feedback/daily', {
-        date: date,
+      console.log(`🤖 Requesting AI feedback for: ${date}`, {
+        forceRegenerate,
       });
 
-      console.log('✅ AI Feedback generated:', response.data.data);
+      const response = await api.post(endpoint, { date });
 
-      set({
-        feedback: response.data.data,
-        feedbackGenerated: true,
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to fetch feedback');
+      }
+
+      const feedbackData = response.data.data;
+      const isCached = response.data.cached || false;
+
+      // Log info untuk debugging
+      if (isCached) {
+        console.log('📦 Feedback loaded from backend cache (no changes)');
+      } else {
+        console.log('✨ Fresh feedback generated from Gemini');
+      }
+
+      // Simpan ke state
+      set((state) => ({
+        feedback: feedbackData,
+        feedbackByDate: {
+          ...state.feedbackByDate,
+          [date]: feedbackData,
+        },
+        error: null,
         isLoading: false,
-      });
+      }));
 
-      return response.data.data;
+      return feedbackData;
     } catch (err) {
-      console.error('❌ Generate feedback error:', err);
+      console.error('❌ Fetch feedback error:', err);
+
+      const errorMessage =
+        err.response?.data?.message || err.message || 'Failed to load feedback';
+
       set({
-        error: err.response?.data?.message || err.message || 'Failed to generate feedback',
+        feedback: null,
+        error: errorMessage,
         isLoading: false,
       });
+
       throw err;
     }
   },
 
   /**
-   * Fetch AI Feedback yang sudah pernah di-generate
+   * ✅ Generate feedback (alias untuk fetchFeedback)
    * @param {string} date - format: YYYY-MM-DD
    */
-  fetchFeedback: async (date) => {
-    set({ isLoading: true, error: null });
-
-    try {
-      console.log('📖 Fetching AI feedback for:', date);
-
-      // Coba generate jika belum ada
-      const response = await api.post('/feedback/daily', {
-        date: date,
-      });
-
-      set({
-        feedback: response.data.data,
-        feedbackGenerated: true,
-        isLoading: false,
-      });
-
-      return response.data.data;
-    } catch (err) {
-      console.error('❌ Fetch feedback error:', err);
-      
-      // Jika error, set feedback null tapi jangan throw error
-      set({
-        feedback: null,
-        feedbackGenerated: false,
-        error: null, // Jangan tampilkan error, hanya silent fail
-        isLoading: false,
-      });
-    }
+  generateDailyFeedback: async (date) => {
+    return get().fetchFeedback(date);
   },
 
   /**
-   * Clear feedback
+   * ✅ Force regenerate feedback
+   * Gunakan ini kalau user explicit mau refresh feedback
+   * @param {string} date - format: YYYY-MM-DD
    */
-  clearFeedback: () => {
-    set({
-      feedback: null,
-      feedbackGenerated: false,
-      error: null,
-    });
+  forceRegenerate: async (date) => {
+    return get().fetchFeedback(date, true);
   },
 
   /**
-   * Clear error
+   * ✅ Get feedback dari memory (tanpa API call)
+   * @param {string} date - format: YYYY-MM-DD
+   * @returns {object|null}
+   */
+  getFeedbackByDate: (date) => {
+    return get().feedbackByDate[date] || null;
+  },
+
+  /**
+   * ✅ Clear error
    */
   clearError: () => {
     set({ error: null });
   },
 
   /**
-   * Reset store
+   * ✅ Reset store
    */
   resetFeedback: () => {
+    console.log('♻️ Resetting feedback store');
     set({
       feedback: null,
+      feedbackByDate: {},
       isLoading: false,
       error: null,
-      feedbackGenerated: false,
+    });
+  },
+
+  /**
+   * ✅ Clear feedback untuk tanggal tertentu dari memory
+   * (Backend tetap punya data, ini hanya clear FE state)
+   * @param {string} date - format: YYYY-MM-DD
+   */
+  clearFeedbackByDate: (date) => {
+    set((state) => {
+      const newFeedbackByDate = { ...state.feedbackByDate };
+      delete newFeedbackByDate[date];
+
+      return {
+        feedbackByDate: newFeedbackByDate,
+        feedback: state.feedback?.log_id === date ? null : state.feedback,
+      };
+    });
+  },
+
+  /**
+   * ✅ Clear all feedback dari memory
+   */
+  clearAllFeedback: () => {
+    set({
+      feedback: null,
+      feedbackByDate: {},
     });
   },
 }));
