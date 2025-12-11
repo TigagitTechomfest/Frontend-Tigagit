@@ -1,3 +1,4 @@
+// services/progressService.js
 import api from './api';
 
 /**
@@ -17,6 +18,37 @@ export const getDailyProgress = async (date) => {
   }
 };
 
+/**
+ * Get weight history for the logged-in user
+ * @returns {Promise} Response with weight history data
+ */
+export const getWeightHistory = async () => {
+  try {
+    const response = await api.get('/assessment/weight/history');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching weight history:', error);
+    throw error;
+  }
+};
+
+/**
+ * Update current weight
+ * @param {number} weight - New weight value
+ * @returns {Promise} Response with updated weight data
+ */
+export const updateWeight = async (weight) => {
+  try {
+    const response = await api.put('/assessment/weight', { weight });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating weight:', error);
+    throw error;
+  }
+};
+
 export default {
-  getDailyProgress
+  getDailyProgress,
+  getWeightHistory,
+  updateWeight
 };
