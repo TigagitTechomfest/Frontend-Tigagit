@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiMail, FiAlertCircle, FiCheckCircle, FiArrowLeft } from 'react-icons/fi';
 import useAuthStore from '../store/authStore';
+import food1 from '../assets/images/food_1.png';
+import food2 from '../assets/images/food_2.png';
+import food3 from '../assets/images/food_3.png';
 
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
@@ -129,25 +132,24 @@ const ForgotPasswordPage = () => {
             </p>
           </div>
 
-          {/* Rotating Circle Images - sama seperti LoginPage */}
           <div className="relative w-full max-w-md h-[320px] mx-auto flex items-center justify-center">
             <motion.div
-              className="absolute w-60 h-60 rounded-full overflow-hidden shadow-2xl z-20"
-              style={{ top: '10%', left: '-20%' }}
+              className="absolute w-60 h-60 rounded-full overflow-hidden z-20"
+              style={{ top: '10%', left: '-15%' }}
               animate={{ rotate: [0, 360] }}
               transition={{ 
                 rotate: { duration: 20, repeat: Infinity, ease: "linear" }
               }}
             >
               <img
-                src="https://images.unsplash.com/photo-1505576399279-565b52d4ac71?w=500&h=500&fit=crop"
-                alt="Healthy food"
+                src={food1}
+                alt="Healthy food 1"
                 className="w-full h-full object-cover"
               />
             </motion.div>
             
             <motion.div
-              className="absolute w-80 h-80 rounded-full overflow-hidden shadow-2xl z-10"
+              className="absolute w-80 h-80 rounded-full overflow-hidden z-10"
               style={{ top: '-20%', right: '0%' }}
               animate={{ rotate: [0, -360] }}
               transition={{ 
@@ -155,14 +157,14 @@ const ForgotPasswordPage = () => {
               }}
             >
               <img
-                src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=500&h=500&fit=crop"
-                alt="Fresh vegetables"
+                src={food2}
+                alt="Healthy food 2"
                 className="w-full h-full object-cover"
               />
             </motion.div>
             
             <motion.div
-              className="absolute w-45 h-45 rounded-full overflow-hidden shadow-2xl z-20"
+              className="absolute w-45 h-45 rounded-full overflow-hidden z-20"
               style={{ bottom: '-12%', left: '17%' }}
               animate={{ rotate: [0, 360] }}
               transition={{ 
@@ -170,8 +172,8 @@ const ForgotPasswordPage = () => {
               }}
             >
               <img
-                src="https://images.unsplash.com/photo-1494390248081-4e521a5940db?w=500&h=500&fit=crop"
-                alt="Healthy breakfast"
+                src={food3}
+                alt="Healthy food 3"
                 className="w-full h-full object-cover"
               />
             </motion.div>
@@ -307,13 +309,6 @@ const ForgotPasswordPage = () => {
                 </button>
               </div>
             )}
-          </div>
-          
-          {/* Footer Note */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-500">
-              © {new Date().getFullYear()} NutriGo. All rights reserved.
-            </p>
           </div>
         </motion.div>
       </div>

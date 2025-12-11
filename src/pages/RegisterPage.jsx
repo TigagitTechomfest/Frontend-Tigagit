@@ -13,6 +13,9 @@ import { Weight } from 'lucide-react';
 import sadKhalisha from '../assets/images/sad_khalisha.png';
 import happyRico from '../assets/images/happy_rico.png';
 import sadAldi from '../assets/images/sad_aldi.png';
+import food1 from '../assets/images/food_1.png';
+import food2 from '../assets/images/food_2.png';
+import food3 from '../assets/images/food_3.png';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -731,18 +734,18 @@ const RegisterPage = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <div className="mb-40 text-center lg:text-left w-full">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 leading-tight mb-6">
-              Untuk memudahkan NutriGo membantumu dengan maksimal,
+          <div className="mb-8 sm:mb-12 lg:mb-20 text-center lg:text-left w-full px-2">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-gray-900 leading-tight mb-3 sm:mb-4 lg:mb-6">
+              Untuk memudahkan <span className="text-green-600">WellNezt</span> membantumu dengan maksimal,
             </h1>
-            <p className="text-1xl md:text-2xl text-gray-700">
-              isi dulu beberapa informasi tentang dirimu ya
+            <p className="text-base sm:text-lg md:text-xl lg:text-1xl text-gray-700">
+              isi dulu beberapa informasi tentang dirimu ya!
             </p>
           </div>
 
           <div className="relative w-full max-w-md h-[320px] mx-auto flex items-center justify-center">
             <motion.div
-              className="absolute w-60 h-60 md:w-60 md:h-60 lg:w-60 lg:h-60 rounded-full overflow-hidden shadow-2xl z-20"
+              className="absolute w-60 h-60 md:w-60 md:h-60 lg:w-60 lg:h-60 rounded-full overflow-hidden z-20"
               style={{ top: '10%', left: '-20%' }}
               animate={{ 
                 rotate: [0, 360],
@@ -756,14 +759,14 @@ const RegisterPage = () => {
               }}
             >
               <img
-                src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&h=500&fit=crop"
-                alt="Healthy salad bowl"
+                src={food1}
+                alt="Healthy food 1"
                 className="w-full h-full object-cover"
               />
             </motion.div>
             
             <motion.div
-              className="absolute w-100 h-100 md:w-100 md:h-100 lg:w-80 lg:h-80 rounded-full overflow-hidden shadow-2xl z-10"
+              className="absolute w-100 h-100 md:w-100 md:h-100 lg:w-80 lg:h-80 rounded-full overflow-hidden z-10"
               style={{ top: '-20%', right: '0%' }}
               animate={{ 
                 rotate: [0, -360],
@@ -777,14 +780,14 @@ const RegisterPage = () => {
               }}
             >
               <img
-                src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&h=500&fit=crop"
-                alt="Colorful food bowl"
+                src={food2}
+                alt="Healthy food 2"
                 className="w-full h-full object-cover"
               />
             </motion.div>
             
             <motion.div
-              className="absolute w-45 h-45 md:w-45 md:h-45 lg:w-45 lg:h-45 rounded-full overflow-hidden shadow-2xl z-20"
+              className="absolute w-45 h-45 md:w-45 md:h-45 lg:w-45 lg:h-45 rounded-full overflow-hidden z-20"
               style={{ bottom: '-12%', left: '17%' }}
               animate={{ 
                 rotate: [0, 360],
@@ -798,8 +801,8 @@ const RegisterPage = () => {
               }}
             >
               <img
-                src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=500&h=500&fit=crop"
-                alt="Healthy breakfast"
+                src={food3}
+                alt="Healthy food 3"
                 className="w-full h-full object-cover"
               />
             </motion.div>

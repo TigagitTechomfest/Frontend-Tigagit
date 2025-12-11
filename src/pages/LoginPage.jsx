@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiMail, FiLock, FiAlertCircle, FiEye, FiEyeOff } from 'react-icons/fi';
 import useAuthStore from '../store/authStore';
+import food1 from '../assets/images/food_1.png';
+import food2 from '../assets/images/food_2.png';
+import food3 from '../assets/images/food_3.png';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -123,45 +126,46 @@ const LoginPage = () => {
               Selamat datang kembali
             </h1>
             <p className="text-1xl md:text-2xl text-gray-700">
-              Mulai lagi rutinitas sehatmu bersama NutriGo!
+              Mulai lagi rutinitas sehatmu bersama WellNezt!
             </p>
           </div>
 
           <div className="relative w-full max-w-md h-[320px] mx-auto flex items-center justify-center">
             <motion.div
-              className="absolute w-60 h-60 md:w-60 md:h-60 lg:w-60 lg:h-60 rounded-full overflow-hidden shadow-2xl z-20"
-              style={{ top: '10%', left: '-20%' }}
+              className="absolute w-60 h-60 md:w-60 md:h-60 lg:w-60 lg:h-60 rounded-full overflow-hidden z-20"
+              style={{ top: '10%', left: '-15%' }}
               animate={{ rotate: [0, 360] }}
               transition={{ rotate: { duration: 20, repeat: Infinity, ease: "linear" }}}
             >
               <img
-                src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&h=500&fit=crop"
-                alt="Healthy salad bowl"
+                src={food1}
+                alt="Healthy food 1"
                 className="w-full h-full object-cover"
               />
             </motion.div>
             
             <motion.div
-              className="absolute w-100 h-100 md:w-100 md:h-100 lg:w-80 lg:h-80 rounded-full overflow-hidden shadow-2xl z-10"
+              className="absolute w-100 h-100 md:w-100 md:h-100 lg:w-80 lg:h-80 rounded-full overflow-hidden z-10"
               style={{ top: '-20%', right: '0%' }}
               animate={{ rotate: [0, -360] }}
               transition={{ rotate: { duration: 25, repeat: Infinity, ease: "linear" }}}
             >
               <img
-                src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&h=500&fit=crop"
-                alt="Colorful food bowl"
+                src={food2}
+                alt="Healthy food 2"
+                className="w-full h-full object-cover"
               />
             </motion.div>
             
             <motion.div
-              className="absolute w-45 h-45 md:w-45 md:h-45 lg:w-45 lg:h-45 rounded-full overflow-hidden shadow-2xl z-20"
+              className="absolute w-45 h-45 md:w-45 md:h-45 lg:w-45 lg:h-45 rounded-full overflow-hidden z-20"
               style={{ bottom: '-12%', left: '17%' }}
               animate={{ rotate: [0, 360] }}
               transition={{ rotate: { duration: 18, repeat: Infinity, ease: "linear" }}}
             >
               <img
-                src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=500&h=500&fit=crop"
-                alt="Healthy breakfast"
+                src={food3}
+                alt="Healthy food 3"
                 className="w-full h-full object-cover"
               />
             </motion.div>
@@ -186,7 +190,7 @@ const LoginPage = () => {
                 Hello, There!
               </h2>
               <p className="text-gray-600 text-2xl">
-                Welcome to <span className="font-bold text-green-600">NutriGo</span>
+                Welcome to <span className="font-bold text-green-600">WellNezt</span>
               </p>
             </motion.div>
 
@@ -254,7 +258,6 @@ const LoginPage = () => {
                   </button>
                 </div>
                 
-                {/* Reset Password Link - Updated to navigate to new page */}
                 <div className="mt-2 text-right">
                   <button 
                     type="button" 
@@ -290,12 +293,13 @@ const LoginPage = () => {
 
             <p className="mt-8 text-center text-gray-600 text-base">
               Don't have an account?{" "}
-              <a
-                className="text-green-600 font-bold hover:text-green-700 underline text-lg cursor-pointer"
+              <button
+                type="button"
                 onClick={() => navigate('/register')}
+                className="font-medium text-green-600 hover:text-green-700 focus:outline-none transition-colors"
               >
                 Register
-              </a>
+              </button>
             </p>
           </div>
         </motion.div>

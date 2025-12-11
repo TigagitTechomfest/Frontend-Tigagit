@@ -163,7 +163,7 @@ const ResetPasswordPage = () => {
             <div className="flex justify-center mb-8">
               <Link to="/" className="flex items-center space-x-3">
                 <span className="text-3xl font-bold text-green-600">
-                  NutriGo
+                  WellNezt
                 </span>
               </Link>
             </div>
@@ -332,13 +332,6 @@ const ResetPasswordPage = () => {
                 </Link>
               </div>
             )}
-          </div>
-
-          {/* Footer */}
-          <div className="bg-gray-50 px-8 py-4 text-center border-t border-gray-100">
-            <p className="text-sm text-gray-500">
-              © {new Date().getFullYear()} NutriGo. All rights reserved.
-            </p>
           </div>
         </motion.div>
       </div>
