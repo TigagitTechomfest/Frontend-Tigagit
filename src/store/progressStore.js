@@ -1,13 +1,17 @@
+// store/progressStore.js
 import { create } from 'zustand';
 import { format } from 'date-fns';
-import { getDailyProgress } from '../services/progressService';
+import { getDailyProgress, getWeightHistory } from '../services/progressService';
 
 const useProgressStore = create((set, get) => ({
   // State
   dailyProgress: null,
+  weightHistory: null,
   selectedDate: format(new Date(), 'yyyy-MM-dd'),
   isLoading: false,
+  isLoadingWeightHistory: false,
   error: null,
+  weightHistoryError: null,
 
   // Actions
   fetchDailyProgress: async (date) => {
@@ -30,6 +34,30 @@ const useProgressStore = create((set, get) => ({
         isLoading: false,
       });
       throw error;
+    }
+  },
+
+  // Fetch weight history
+  fetchWeightHistory: async () => {
+    set({ isLoadingWeightHistory: true, weightHistoryError: null });
+    
+    try {
+      const response = await getWeightHistory();
+      
+      set({
+        weightHistory: response.data,
+        isLoadingWeightHistory: false,
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error in fetchWeightHistory:', error);
+      set({
+        weightHistoryError: error.response?.data?.message || error.message || 'Failed to fetch weight history',
+        isLoadingWeightHistory: false,
+      });
+      // Don't throw error, just log it so the page still renders
+      return null;
     }
   },
 
