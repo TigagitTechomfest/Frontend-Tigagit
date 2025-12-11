@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FaUser, FaRulerVertical, FaWeight, FaCalculator, FaFire, FaDumbbell, FaUtensils, FaExclamationTriangle, FaCalendarAlt, FaEdit } from 'react-icons/fa';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import useProgressStore from '../store/progressStore';
@@ -10,12 +10,15 @@ import ExerciseCard from '../components/common/ExerciseCard';
 const ProgressPage = () => {
   const navigate = useNavigate();
 
-  // Zustand stores
   const {
     dailyProgress,
+    weightHistory,
     isLoading,
+    isLoadingWeightHistory,
     error,
+    weightHistoryError,
     fetchDailyProgress,
+    fetchWeightHistory,
     getNutrientProgress,
     getNetCalories,
     getRemainingCalories
@@ -23,53 +26,89 @@ const ProgressPage = () => {
 
   const { profile, assessment, fetchProfile } = useUserStore();
 
-  // Fetch data on component mount
   useEffect(() => {
     const today = format(new Date(), 'yyyy-MM-dd');
     console.log('📅 Fetching progress for:', today);
     console.log('👤 User profile:', profile);
     console.log('📊 User assessment:', assessment);
 
-    // Fetch profile jika belum ada
     if (!profile || !assessment) {
       fetchProfile();
     }
 
     fetchDailyProgress(today);
-  }, [fetchDailyProgress, fetchProfile]);
+    fetchWeightHistory();
+  }, [fetchDailyProgress, fetchWeightHistory, fetchProfile]);
 
-  // Calculate progress metrics - AMBIL DARI ASSESSMENT
   const height = assessment?.height || 0;
-  const currentWeight = assessment?.weight || 0;
+  const currentWeight = assessment?.weight || weightHistory?.current_weight || 0;
   const age = assessment?.age || 0;
   const gender = assessment?.gender || 'male';
 
-  // Data dari profile
-  const initialWeight = profile?.initial_weight || assessment?.initial_weight || currentWeight;
-  const goalWeight = profile?.goal_weight || assessment?.goal_weight || (currentWeight > 0 ? currentWeight - 5 : 0);
-  const name = profile?.name || 'Pengguna';
-
-  const weightLoss = initialWeight - currentWeight;
-  const weightRemaining = Math.max(0, currentWeight - goalWeight);
-  const progressPercent = initialWeight > goalWeight && initialWeight > 0
-    ? Math.round((weightLoss / (initialWeight - goalWeight)) * 100)
-    : 0;
-
-  const burnedCalories = dailyProgress?.burned || 0;
-
   // Calculate BMI
   const calculateBMI = () => {
-    if (height && currentWeight) {
+    if (height && currentWeight && height > 0 && currentWeight > 0) {
       const heightInM = height / 100;
-      const calculatedBMI = (currentWeight / (heightInM * heightInM)).toFixed(1);
-      return calculatedBMI;
+      return (currentWeight / (heightInM * heightInM)).toFixed(1);
     }
     return assessment?.bmi?.toFixed(1) || '0';
   };
 
   const bmi = calculateBMI();
 
-  // BMI Status
+  // Calculate ideal weight based on BMI
+  const calculateIdealWeight = () => {
+    if (!height || height === 0) return 0;
+    
+    const heightInM = height / 100;
+    const currentBMI = parseFloat(bmi);
+    
+    if (currentBMI < 18.5) {
+      return Math.round(21 * heightInM * heightInM);
+    }
+    else if (currentBMI > 24.9) {
+      return Math.round(22 * heightInM * heightInM);
+    }
+    else {
+      return currentWeight;
+    }
+  };
+
+  // ✅ Ambil BB Awal dari entri paling awal di riwayat
+  const getInitialWeightFromHistory = () => {
+    if (!weightHistory?.history || weightHistory.history.length === 0) return null;
+    const sorted = [...weightHistory.history].sort(
+      (a, b) => new Date(a.recorded_at) - new Date(b.recorded_at)
+    );
+    return sorted[0].weight;
+  };
+
+  const initialWeightFromHistory = getInitialWeightFromHistory();
+  const initialWeight = profile?.initial_weight || assessment?.initial_weight || initialWeightFromHistory || currentWeight;
+
+  const idealWeight = calculateIdealWeight();
+  const goalWeight = profile?.goal_weight || assessment?.goal_weight || idealWeight;
+  const name = profile?.name || 'Pengguna';
+
+  const weightChange = currentWeight - initialWeight;
+  const weightRemaining = Math.abs(currentWeight - goalWeight);
+
+  let progressPercent = 0;
+  if (initialWeight !== goalWeight && initialWeight > 0) {
+    const totalTargetChange = goalWeight - initialWeight;
+    const actualChange = weightChange;
+
+    if (totalTargetChange > 0) {
+      // Target: Naik berat badan
+      progressPercent = Math.max(0, Math.min(100, Math.round((actualChange / totalTargetChange) * 100)));
+    } else {
+      // Target: Turun berat badan
+      progressPercent = Math.max(0, Math.min(100, Math.round((Math.abs(actualChange) / Math.abs(totalTargetChange)) * 100)));
+    }
+  }
+
+  const burnedCalories = dailyProgress?.burned || 0;
+
   const getBmiStatus = (bmi) => {
     const bmiValue = parseFloat(bmi);
     if (bmiValue === 0) return { label: 'N/A', color: 'text-gray-600 bg-gray-50', border: 'border-gray-200' };
@@ -81,28 +120,48 @@ const ProgressPage = () => {
 
   const bmiStatus = getBmiStatus(bmi);
 
-  // Calculate days elapsed
   const daysElapsed = profile?.created_at
     ? Math.ceil((new Date() - new Date(profile.created_at)) / (1000 * 60 * 60 * 24))
     : 0;
 
-  // Get progress percentages
   const caloriesPercent = getNutrientProgress('calories');
   const proteinPercent = getNutrientProgress('protein');
   const carbsPercent = getNutrientProgress('carbs');
   const fatPercent = getNutrientProgress('fat');
 
-  // Get calculated values
   const netCalories = getNetCalories();
   const remainingCalories = getRemainingCalories();
 
-  // Today's date
   const todayFormatted = format(new Date(), 'EEEE, dd MMMM yyyy', { locale: id });
 
-  // Check if profile is complete
   const isProfileComplete = currentWeight > 0 && height > 0 && age > 0;
 
-  // Loading State
+  // ✅ Ambil entri terbaru per hari, maks 7 hari terakhir
+  const getLast7DaysHistory = () => {
+    if (!weightHistory?.history || weightHistory.history.length === 0) {
+      return [];
+    }
+
+    const historyByDate = {};
+    for (const record of weightHistory.history) {
+      const dateKey = format(parseISO(record.history_date), 'yyyy-MM-dd');
+      if (
+        !historyByDate[dateKey] ||
+        new Date(record.recorded_at) > new Date(historyByDate[dateKey].recorded_at)
+      ) {
+        historyByDate[dateKey] = record;
+      }
+    }
+
+    const uniqueHistory = Object.values(historyByDate).sort(
+      (a, b) => new Date(b.history_date) - new Date(a.history_date)
+    );
+
+    return uniqueHistory.slice(0, 7);
+  };
+
+  const last7DaysHistory = getLast7DaysHistory();
+
   if (isLoading && !dailyProgress) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4 flex items-center justify-center">
@@ -114,11 +173,10 @@ const ProgressPage = () => {
     );
   }
 
-  // Error State
   if (error && !dailyProgress) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-6 pt-24">
-        <div className="max-w-md w-full">
+        <div className="max-w-md w-full mx-auto">
           <div className="bg-white rounded-2xl shadow-lg p-8 border-2 border-red-200">
             <div className="flex justify-center mb-4">
               <div className="bg-red-100 rounded-full p-4">
@@ -156,16 +214,16 @@ const ProgressPage = () => {
     );
   }
 
-  // Main Content
+  const isUnderweight = parseFloat(bmi) < 18.5;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-6 pt-24">
       <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
 
-        {/* Personal Greeting */}
         <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6 border border-gray-100">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-1">Hi, {name}! 👋</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-1">Hi, {name}!</h1>
               <p className="text-gray-600 text-sm md:text-base">Ini progress mu hari ini</p>
             </div>
             <div className="flex items-center gap-2 text-xs md:text-sm text-gray-500">
@@ -175,7 +233,6 @@ const ProgressPage = () => {
           </div>
         </div>
 
-        {/* Warning Banner - Profile Incomplete */}
         {!isProfileComplete && (
           <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
             <div className="flex items-start gap-3">
@@ -200,7 +257,6 @@ const ProgressPage = () => {
           </div>
         )}
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           <div className="bg-white rounded-xl shadow-sm p-3 md:p-4 border border-gray-100 hover:shadow-md transition-shadow">
             <div className="flex items-center gap-2 mb-2">
@@ -247,44 +303,61 @@ const ProgressPage = () => {
           </div>
         </div>
 
-        {/* Weight Loss Progress */}
         <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6 border border-gray-100">
-          <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-4">Progres Penurunan Berat Badan</h2>
+          <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-4">
+            {isUnderweight ? 'Progres Peningkatan Berat Badan' : 
+             parseFloat(bmi) >= 25 ? 'Progres Penurunan Berat Badan' : 
+             'Progres Pemeliharaan Berat Badan'}
+          </h2>
 
           {isProfileComplete ? (
             <>
               <div className="mb-6">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-2xl md:text-3xl font-bold text-blue-600">
-                    {Math.min(100, Math.max(0, progressPercent))}%
+                  <span 
+                    className="text-2xl md:text-3xl font-bold"
+                    style={{ color: '#F0B639' }}>
+                    {progressPercent}%
                   </span>
                   <span className="text-xs md:text-sm text-gray-500">
-                    {currentWeight} kg / {goalWeight} kg
+                    {currentWeight} kg → {goalWeight} kg
                   </span>
                 </div>
 
                 <div className="relative h-3 md:h-4 bg-gray-200 rounded-full overflow-hidden">
                   <div
-                    className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min(100, Math.max(0, progressPercent))}%` }}
+                    className="absolute top-0 left-0 h-full bg-[#F0B639] rounded-full transition-all duration-500"
+                    style={{ width: `${progressPercent}%` }}
                   ></div>
                 </div>
 
                 <div className="flex justify-between mt-2 text-xs text-gray-500">
-                  <span>{goalWeight} kg Target</span>
                   <span>{initialWeight} kg</span>
+                  <span>{goalWeight} kg Target</span>
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-2 md:gap-4">
                 <div className="text-center p-3 md:p-4 bg-green-50 rounded-lg border border-green-200">
-                  <p className="text-xl md:text-2xl font-bold text-green-600">{Math.abs(weightLoss).toFixed(1)}</p>
-                  <p className="text-xs text-gray-600 mt-1">kg {weightLoss >= 0 ? 'Turun' : 'Naik'}</p>
+                  <p className="text-xl md:text-2xl font-bold text-green-600">
+                    {Math.abs(weightChange).toFixed(1)}
+                  </p>
+                  <p className="text-xs text-gray-600 mt-1">
+                    {isUnderweight
+                      ? (weightChange >= 0 ? 'kg Naik' : 'kg Turun')
+                      : (weightChange >= 0 ? 'kg Turun' : 'kg Naik')}
+                  </p>
                 </div>
+
                 <div className="text-center p-3 md:p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <p className="text-xl md:text-2xl font-bold text-blue-600">{weightRemaining.toFixed(1)}</p>
-                  <p className="text-xs text-gray-600 mt-1">kg Sisa</p>
+                  <p className="text-xl md:text-2xl font-bold text-blue-600">
+                    {weightRemaining.toFixed(1)}
+                  </p>
+                  <p className="text-xs text-gray-600 mt-1">
+                    {isUnderweight ? 'kg Sisa Naik' : 'kg Sisa Turun'}
+                  </p>
                 </div>
+
                 <div className="text-center p-3 md:p-4 bg-purple-50 rounded-lg border border-purple-200">
                   <p className="text-xl md:text-2xl font-bold text-purple-600">{daysElapsed}</p>
                   <p className="text-xs text-gray-600 mt-1">hari</p>
@@ -306,7 +379,6 @@ const ProgressPage = () => {
           )}
         </div>
 
-        {/* Daily Nutrition Progress */}
         {dailyProgress ? (
           <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6 border border-gray-100">
             <div className="flex items-center gap-2 mb-4 md:mb-6">
@@ -314,10 +386,7 @@ const ProgressPage = () => {
               <h2 className="text-lg md:text-xl font-bold text-gray-800">Progress Nutrisi Hari Ini</h2>
             </div>
 
-
-            {/* Nutrient Breakdown */}
             <div className="space-y-3 md:space-y-4">
-              {/* Calories */}
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <div className="flex items-center gap-2">
@@ -337,7 +406,6 @@ const ProgressPage = () => {
                 <p className="text-xs text-gray-500 mt-1">{caloriesPercent}%</p>
               </div>
 
-              {/* Protein */}
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <div className="flex items-center gap-2">
@@ -357,7 +425,6 @@ const ProgressPage = () => {
                 <p className="text-xs text-gray-500 mt-1">{proteinPercent}%</p>
               </div>
 
-              {/* Carbs */}
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <div className="flex items-center gap-2">
@@ -377,7 +444,6 @@ const ProgressPage = () => {
                 <p className="text-xs text-gray-500 mt-1">{carbsPercent}%</p>
               </div>
 
-              {/* Fat */}
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <div className="flex items-center gap-2">
@@ -398,7 +464,6 @@ const ProgressPage = () => {
               </div>
             </div>
 
-            {/* Burned Calories */}
             {dailyProgress.burned > 0 && (
               <div className="mt-4 md:mt-6 pt-4 md:pt-6 border-t border-gray-200">
                 <div className="flex items-center justify-between p-3 md:p-4 bg-green-50 rounded-lg border border-green-200">
@@ -430,56 +495,77 @@ const ProgressPage = () => {
           </div>
         )}
 
-        {/* Weight History Table */}
         <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6 border border-gray-100">
           <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-4">Riwayat Berat Badan (7 Hari)</h2>
-          <div className="overflow-x-auto -mx-4 md:mx-0">
-            <div className="inline-block min-w-full align-middle px-4 md:px-0">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-2 md:px-4 text-xs md:text-sm font-semibold text-gray-700">Tanggal</th>
-                    <th className="text-left py-3 px-2 md:px-4 text-xs md:text-sm font-semibold text-gray-700">Berat (kg)</th>
-                    <th className="text-left py-3 px-2 md:px-4 text-xs md:text-sm font-semibold text-gray-700">Catatan</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {currentWeight > 0 ? (
-                    [...Array(7)].map((_, i) => (
-                      <tr key={i} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                        <td className="py-3 px-2 md:px-4 text-xs md:text-sm text-gray-600">
-                          {new Date(Date.now() - i * 24 * 60 * 60 * 1000).toLocaleDateString('id-ID', {
-                            day: 'numeric',
-                            month: 'short'
-                          })}
-                        </td>
-                        <td className="py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-gray-800">
-                          {(currentWeight - (i * 0.1)).toFixed(1)}
-                        </td>
-                        <td className="py-3 px-2 md:px-4 text-xs md:text-sm text-gray-500">
-                          {i === 0 ? 'Hari ini' : `${i} hari lalu`}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="3" className="py-8 text-center">
-                        <FaWeight className="text-gray-300 text-4xl mx-auto mb-3" />
-                        <p className="text-gray-500 text-sm mb-3">Data riwayat tidak tersedia</p>
-                        <button
-                          onClick={() => navigate('/profil')}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors inline-flex items-center gap-2"
-                        >
-                          <FaEdit />
-                          Lengkapi Profil
-                        </button>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+          
+          {isLoadingWeightHistory ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500 text-sm">Memuat riwayat berat badan...</p>
             </div>
-          </div>
+          ) : weightHistoryError ? (
+            <div className="text-center py-8">
+              <FaExclamationTriangle className="text-yellow-500 text-4xl mx-auto mb-3" />
+              <p className="text-gray-500 text-sm mb-3">Gagal memuat riwayat berat badan</p>
+              <button
+                onClick={fetchWeightHistory}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors inline-flex items-center gap-2"
+              >
+                <FaFire />
+                Coba Lagi
+              </button>
+            </div>
+          ) : last7DaysHistory.length > 0 ? (
+            <div className="overflow-x-auto -mx-4 md:mx-0">
+              <div className="inline-block min-w-full align-middle px-4 md:px-0">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left py-3 px-2 md:px-4 text-xs md:text-sm font-semibold text-gray-700">Tanggal</th>
+                      <th className="text-left py-3 px-2 md:px-4 text-xs md:text-sm font-semibold text-gray-700">Berat (kg)</th>
+                      <th className="text-left py-3 px-2 md:px-4 text-xs md:text-sm font-semibold text-gray-700">BMI</th>
+                      <th className="text-left py-3 px-2 md:px-4 text-xs md:text-sm font-semibold text-gray-700">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {last7DaysHistory.map((record) => {
+                      const recordDate = parseISO(record.history_date);
+                      const isToday = format(recordDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+                      const daysAgo = Math.floor((new Date() - recordDate) / (1000 * 60 * 60 * 24));
+                      
+                      return (
+                        <tr key={record.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                          <td className="py-3 px-2 md:px-4 text-xs md:text-sm text-gray-600">
+                            {format(recordDate, 'd MMM yyyy', { locale: id })}
+                          </td>
+                          <td className="py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-gray-800">
+                            {record.weight} kg
+                          </td>
+                          <td className="py-3 px-2 md:px-4 text-xs md:text-sm text-gray-600">
+                            {record.bmi.toFixed(1)}
+                          </td>
+                          <td className="py-3 px-2 md:px-4 text-xs md:text-sm text-gray-500">
+                            {isToday ? (
+                              <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
+                                Hari ini
+                              </span>
+                            ) : (
+                              `${daysAgo} hari lalu`
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <FaWeight className="text-gray-300 text-4xl mx-auto mb-3" />
+              <p className="text-gray-500 text-sm mb-3">Belum ada riwayat berat badan</p>
+              <p className="text-gray-400 text-xs">Update berat badan Anda di halaman profil untuk mulai tracking</p>
+            </div>
+          )}
         </div>
 
       </div>
