@@ -55,6 +55,8 @@ const ProgressPage = () => {
     ? Math.round((weightLoss / (initialWeight - goalWeight)) * 100)
     : 0;
 
+  const burnedCalories = dailyProgress?.burned || 0;
+
   // Calculate BMI
   const calculateBMI = () => {
     if (height && currentWeight) {
@@ -115,7 +117,7 @@ const ProgressPage = () => {
   // Error State
   if (error && !dailyProgress) {
     return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-6 pt-24">
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-6 pt-24">
         <div className="max-w-md w-full">
           <div className="bg-white rounded-2xl shadow-lg p-8 border-2 border-red-200">
             <div className="flex justify-center mb-4">
@@ -411,7 +413,14 @@ const ProgressPage = () => {
                 </div>
               </div>
             )}
-            <ExerciseCard />
+
+            <ExerciseCard
+              burnedCalories={burnedCalories}
+              onExerciseAdded={() => {
+                const today = format(new Date(), 'yyyy-MM-dd');
+                fetchDailyProgress(today);
+              }}
+            />
           </div>
         ) : (
           <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100 text-center">
@@ -420,7 +429,7 @@ const ProgressPage = () => {
             <p className="text-gray-600 text-sm">Mulai catat makanan Anda hari ini!</p>
           </div>
         )}
-        
+
         {/* Weight History Table */}
         <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6 border border-gray-100">
           <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-4">Riwayat Berat Badan (7 Hari)</h2>
