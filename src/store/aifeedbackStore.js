@@ -55,7 +55,7 @@ const useAiFeedbackStore = create((set, get) => ({
 
       return feedbackData;
     } catch (err) {
-      console.error('❌ Fetch feedback error:', err);
+      console.error('❌ Jurnal belum diisi:', err);
 
       const errorMessage =
         err.response?.data?.message || err.message || 'Failed to load feedback';
