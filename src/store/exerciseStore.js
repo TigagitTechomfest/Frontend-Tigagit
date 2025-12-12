@@ -1,70 +1,191 @@
 import { create } from 'zustand';
 import api from '../services/api';
-import { format } from 'date-fns';
 
-export const useExerciseStore = create((set) => ({
-  // State
-  loading: false,
+const useExerciseStore = create((set, get) => ({
+  // ============= STATE =============
+  exercises: [],
+  exercisesByDate: {}, // { [date]: [exercises] }
+  isLoading: false,
   error: null,
-  success: null,
+  isSubmitting: false,
 
-  // Actions
-  
-  // Add exercise baru
-  addExercise: async (exerciseData, onSuccess) => {
-    set({ loading: true, error: null, success: null });
+  // ============= ACTIONS =============
+
+  /**
+   * ✅ FETCH EXERCISES - Get semua exercise untuk hari ini
+   */
+  fetchExercises: async () => {
+    set({ isLoading: true, error: null });
+
     try {
-      // Tambah exercise_date sebelum kirim
-      const dataToSend = {
-        ...exerciseData,
-        exercise_date: format(new Date(), 'yyyy-MM-dd')
-      };
-      
-      const response = await api.post('/exercises', dataToSend);
-      
-      if (response.data.success) {
-        const newExercise = response.data.data;
-        
-        set({
-          success: {
-            message: `${newExercise.exercise_type} - ${newExercise.calories_burned} kcal berhasil dicatat!`,
-            data: newExercise
-          },
-          error: null,
-        });
+      const response = await api.get('/exercises');
 
-        // Trigger callback untuk refresh progress store dan exercise list
-        if (onSuccess) {
-          onSuccess();
-        }
-
-        return {
-          success: true,
-          data: newExercise,
-          message: 'Exercise berhasil dicatat!'
-        };
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to fetch exercises');
       }
-    } catch (error) {
-      const errorMsg = error.response?.data?.message || 'Gagal menambah exercise';
-      set({ error: errorMsg });
-      throw error;
-    } finally {
-      set({ loading: false });
+
+      const exercisesData = response.data.data || [];
+
+      set((state) => ({
+        exercises: exercisesData,
+        exercisesByDate: {
+          ...state.exercisesByDate,
+          ['today']: exercisesData,
+        },
+        error: null,
+        isLoading: false,
+      }));
+
+      return exercisesData;
+    } catch (err) {
+      console.error('❌ Fetch exercises error:', err);
+
+      const errorMessage =
+        err.response?.data?.message || err.message || 'Failed to load exercises';
+
+      set({
+        exercises: [],
+        error: errorMessage,
+        isLoading: false,
+      });
+
+      throw err;
     }
   },
 
-  // Clear error
-  clearError: () => set({ error: null }),
+  /**
+   * ✅ ADD EXERCISE - Create exercise baru untuk hari ini
+   * @param {string} exerciseType - jenis olahraga
+   * @param {number} duration - durasi dalam menit
+   * @param {number} caloriesBurned - optional, kalori yang terbakar
+   */
+  addExercise: async (exerciseType, duration, caloriesBurned = null) => {
+    set({ isSubmitting: true, error: null });
 
-  // Clear success
-  clearSuccess: () => set({ success: null }),
+    try {
+      const today = new Date().toISOString().split('T')[0];
 
-  // Reset store
-  reset: () => {
+      console.log('🏃 Adding exercise...', {
+        exerciseType,
+        duration,
+        caloriesBurned,
+      });
+
+      const response = await api.post('/exercises', {
+        exercise_date: today,
+        exercise_type: exerciseType,
+        duration: parseInt(duration),
+        calories_burned: caloriesBurned ? parseInt(caloriesBurned) : null,
+      });
+
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to add exercise');
+      }
+
+      const newExercise = response.data.data;
+      const estimatedCalories = caloriesBurned ? 'user input' : 'AI estimated';
+
+      console.log(
+        `✅ Exercise added (${estimatedCalories}): ${newExercise.exercise_type} - ${newExercise.duration}min - ${newExercise.calories_burned} kcal`
+      );
+
+      // Update state
+      set((state) => ({
+        exercises: [...state.exercises, newExercise],
+        exercisesByDate: {
+          ...state.exercisesByDate,
+          ['today']: [...(state.exercisesByDate['today'] || []), newExercise],
+        },
+        error: null,
+        isSubmitting: false,
+      }));
+
+      return newExercise;
+    } catch (err) {
+      console.error('❌ Add exercise error:', err);
+
+      const errorMessage =
+        err.response?.data?.message || err.message || 'Failed to add exercise';
+
+      set({
+        error: errorMessage,
+        isSubmitting: false,
+      });
+
+      throw err;
+    }
+  },
+
+  /**
+   * ✅ DELETE EXERCISE - Hapus exercise berdasarkan ID
+   * @param {number} exerciseId - ID exercise yang mau dihapus
+   */
+  deleteExercise: async (exerciseId) => {
+    try {
+      console.log(`🗑️ Deleting exercise ID: ${exerciseId}`);
+
+      const response = await api.delete(`/exercises/${exerciseId}`);
+
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to delete exercise');
+      }
+
+      console.log(`✅ Exercise deleted`);
+
+      // Update state
+      set((state) => {
+        const updatedExercises = state.exercises.filter((e) => e.id !== exerciseId);
+        const updatedByDate = {
+          ...state.exercisesByDate,
+          ['today']: (state.exercisesByDate['today'] || []).filter((e) => e.id !== exerciseId),
+        };
+
+        return {
+          exercises: updatedExercises,
+          exercisesByDate: updatedByDate,
+        };
+      });
+
+      return true;
+    } catch (err) {
+      console.error('❌ Delete exercise error:', err);
+
+      const errorMessage =
+        err.response?.data?.message || err.message || 'Failed to delete exercise';
+
+      set({ error: errorMessage });
+
+      throw err;
+    }
+  },
+
+  /**
+   * ✅ Get exercises untuk hari ini dari memory
+   */
+  getExercisesToday: () => {
+    return get().exercisesByDate['today'] || [];
+  },
+
+  /**
+   * ✅ Clear error
+   */
+  clearError: () => {
+    set({ error: null });
+  },
+
+  /**
+   * ✅ Reset store
+   */
+  resetExercises: () => {
+    console.log('♻️ Resetting exercises store');
     set({
-      loading: false,
+      exercises: [],
+      exercisesByDate: {},
+      isLoading: false,
       error: null,
-      success: null,
+      isSubmitting: false,
     });
   },
 }));
+
+export default useExerciseStore;
