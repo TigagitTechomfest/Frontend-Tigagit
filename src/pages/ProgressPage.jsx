@@ -5,7 +5,8 @@ import { id } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import useProgressStore from '../store/progressStore';
 import useUserStore from '../store/userStore';
-import ExerciseCard from '../components/common/ExerciseCard';
+import useExerciseStore from '../store/exerciseStore';
+import ExerciseForm from '../components/common/ExerciseForm';
 
 const ProgressPage = () => {
   const navigate = useNavigate();
@@ -26,6 +27,8 @@ const ProgressPage = () => {
 
   const { profile, assessment, fetchProfile } = useUserStore();
 
+  const { fetchExercises } = useExerciseStore();
+
   useEffect(() => {
     const today = format(new Date(), 'yyyy-MM-dd');
     console.log('📅 Fetching progress for:', today);
@@ -38,6 +41,8 @@ const ProgressPage = () => {
 
     fetchDailyProgress(today);
     fetchWeightHistory();
+
+    fetchExercises();
   }, [fetchDailyProgress, fetchWeightHistory, fetchProfile]);
 
   const height = assessment?.height || 0;
@@ -59,10 +64,10 @@ const ProgressPage = () => {
   // Calculate ideal weight based on BMI
   const calculateIdealWeight = () => {
     if (!height || height === 0) return 0;
-    
+
     const heightInM = height / 100;
     const currentBMI = parseFloat(bmi);
-    
+
     if (currentBMI < 18.5) {
       return Math.round(21 * heightInM * heightInM);
     }
@@ -305,16 +310,16 @@ const ProgressPage = () => {
 
         <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6 border border-gray-100">
           <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-4">
-            {isUnderweight ? 'Progres Peningkatan Berat Badan' : 
-             parseFloat(bmi) >= 25 ? 'Progres Penurunan Berat Badan' : 
-             'Progres Pemeliharaan Berat Badan'}
+            {isUnderweight ? 'Progres Peningkatan Berat Badan' :
+              parseFloat(bmi) >= 25 ? 'Progres Penurunan Berat Badan' :
+                'Progres Pemeliharaan Berat Badan'}
           </h2>
 
           {isProfileComplete ? (
             <>
               <div className="mb-6">
                 <div className="flex justify-between items-center mb-2">
-                  <span 
+                  <span
                     className="text-2xl md:text-3xl font-bold"
                     style={{ color: '#F0B639' }}>
                     {progressPercent}%
@@ -464,28 +469,10 @@ const ProgressPage = () => {
               </div>
             </div>
 
-            {dailyProgress.burned > 0 && (
-              <div className="mt-4 md:mt-6 pt-4 md:pt-6 border-t border-gray-200">
-                <div className="flex items-center justify-between p-3 md:p-4 bg-green-50 rounded-lg border border-green-200">
-                  <div className="flex items-center gap-3">
-                    <FaFire className="text-green-600 text-lg md:text-xl flex-shrink-0" />
-                    <div>
-                      <h3 className="font-medium text-gray-700 text-sm md:text-base">Kalori Terbakar</h3>
-                      <p className="text-xs text-gray-500">Dari olahraga hari ini</p>
-                    </div>
-                  </div>
-                  <p className="text-xl md:text-2xl font-bold text-green-600">{dailyProgress.burned}</p>
-                </div>
-              </div>
-            )}
+            <div className='mt-4'>
+              <ExerciseForm />
+            </div>
 
-            <ExerciseCard
-              burnedCalories={burnedCalories}
-              onExerciseAdded={() => {
-                const today = format(new Date(), 'yyyy-MM-dd');
-                fetchDailyProgress(today);
-              }}
-            />
           </div>
         ) : (
           <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100 text-center">
@@ -495,7 +482,7 @@ const ProgressPage = () => {
           </div>
         )}
 
-        <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6 border border-gray-100">
+        {/* <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6 border border-gray-100">
           <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-4">Riwayat Berat Badan (7 Hari)</h2>
           
           {isLoadingWeightHistory ? (
@@ -566,7 +553,7 @@ const ProgressPage = () => {
               <p className="text-gray-400 text-xs">Update berat badan Anda di halaman profil untuk mulai tracking</p>
             </div>
           )}
-        </div>
+        </div> */}
 
       </div>
     </div>
