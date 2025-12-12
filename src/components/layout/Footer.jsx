@@ -1,139 +1,112 @@
 import { Link } from 'react-router-dom';
+import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import LogoWellNezt from '../../assets/images/Logo2.png';
 
 const Footer = () => {
+  const currentYear = new Date().getFullYear();
+
+  const footerLinks = {
+    product: [
+      { label: 'Dashboard', path: '/dashboard' },
+      { label: 'Jurnal Makanan', path: '/food-diary' },
+      { label: 'Progres', path: '/progress' },
+      { label: 'Profil', path: '/profile' },
+    ],
+    company: [
+      { label: 'Tentang Kami', path: 'https://smkrus.sch.id/' },
+      { label: 'Blog', path: 'https://smkrus.sch.id/' },
+      { label: 'Kontak', path: 'https://smkrus.sch.id/kontak/' },
+    ],
+
+  };
+
+
+
   return (
-    <footer className="bg-[#1A202C] text-gray-300">
-      <div className="max-w-6xl mx-auto px-6 lg:px-10 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
-          {/* Logo & Description */}
+    <footer className="bg-white border-t border-gray-200 mt-16 md:mt-20">
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 lg:px-10 py-16 md:py-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 md:gap-12 mb-12 md:mb-16">
+          {/* Brand Column */}
           <div>
-            <h3 className="text-white font-bold text-2xl mb-4">
-              Health & Digital Nutrition
-            </h3>
-            <p className="text-gray-400 mb-6 leading-relaxed">
-              Aplikasi untuk membantu Anda melacak asupan nutrisi harian dan mencapai tujuan kesehatan Anda dengan mudah.
-            </p>
-            <div className="flex gap-4">
-              <a
-                href="#"
-                className="w-10 h-10 bg-[#2D3748] rounded-full flex items-center justify-center hover:bg-[#4ECDC4] hover:text-white transition-colors"
-                aria-label="Facebook"
-              >
-                <span className="text-lg">📘</span>
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 bg-[#2D3748] rounded-full flex items-center justify-center hover:bg-[#4ECDC4] hover:text-white transition-colors"
-                aria-label="Twitter"
-              >
-                <span className="text-lg">🐦</span>
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 bg-[#2D3748] rounded-full flex items-center justify-center hover:bg-[#4ECDC4] hover:text-white transition-colors"
-                aria-label="Instagram"
-              >
-                <span className="text-lg">📷</span>
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 bg-[#2D3748] rounded-full flex items-center justify-center hover:bg-[#4ECDC4] hover:text-white transition-colors"
-                aria-label="LinkedIn"
-              >
-                <span className="text-lg">💼</span>
-              </a>
+            <div className="mb-6">
+              <img src={LogoWellNezt} alt="WellNest Logo" className="w-28 h-auto object-contain" />
             </div>
+            <p className="text-sm text-gray-600 leading-relaxed mb-6">
+              Platform nutrisi dan kesehatan untuk gaya hidup yang lebih baik.
+            </p>
+
+            
           </div>
 
-          {/* Quick Links */}
+          {/* Product Links */}
           <div>
-            <h4 className="text-white font-semibold text-lg mb-4">Tautan Cepat</h4>
+            <h3 className="font-bold text-gray-900 text-sm uppercase tracking-wider mb-6">
+              Produk
+            </h3>
             <ul className="space-y-3">
-              <li>
-                <Link to="/dashboard" className="text-gray-400 hover:text-[#4ECDC4] transition-colors">
-                  Dashboard
-                </Link>
-              </li>
-              <li>
-                <Link to="/food-diary" className="text-gray-400 hover:text-[#4ECDC4] transition-colors">
-                  Jurnal Makanan
-                </Link>
-              </li>
-              <li>
-                <Link to="/progress" className="text-gray-400 hover:text-[#4ECDC4] transition-colors">
-                  Progres
-                </Link>
-              </li>
-              <li>
-                <Link to="/profile" className="text-gray-400 hover:text-[#4ECDC4] transition-colors">
-                  Profil
-                </Link>
-              </li>
+              {footerLinks.product.map((link) => (
+                <li key={link.path}>
+                  <Link
+                    to={link.path}
+                    className="text-sm text-gray-600 hover:text-emerald-600 transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
-          {/* Resources */}
+          {/* Company Links */}
           <div>
-            <h4 className="text-white font-semibold text-lg mb-4">Resources</h4>
+            <h3 className="font-bold text-gray-900 text-sm uppercase tracking-wider mb-6">
+              School
+            </h3>
             <ul className="space-y-3">
-              <li>
-                <a href="#" className="text-gray-400 hover:text-[#4ECDC4] transition-colors">
-                  Dokumentasi
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-[#4ECDC4] transition-colors">
-                  Blog
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-[#4ECDC4] transition-colors">
-                  FAQ
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-[#4ECDC4] transition-colors">
-                  Panduan
-                </a>
-              </li>
+              {footerLinks.company.map((link) => (
+                <li key={link.path}>
+                  <Link
+                    to={link.path}
+                    className="text-sm text-gray-600 hover:text-emerald-600 transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
-          {/* Contact */}
-          <div>
-            <h4 className="text-white font-semibold text-lg mb-4">Kontak</h4>
-            <ul className="space-y-3">
-              <li className="text-gray-400">
-                📧 support@healthnutrition.com
-              </li>
-              <li className="text-gray-400">
-                📞 +62 123 456 789
-              </li>
-              <li className="text-gray-400">
-                📍 Jakarta, Indonesia
-              </li>
-            </ul>
-          </div>
+         
+
+          {/* Contact Info */}
+            <div className="space-y-3">
+              <a 
+                href="mailto:support@wellnest.com"
+                className="flex items-center gap-3 text-sm text-gray-600 hover:text-emerald-600 transition-colors"
+              >
+                <Mail className="w-4 h-4 flex-shrink-0" />
+                <span>wellnezt8@gmail.com</span>
+              </a>
+      
+              <div className="flex items-start gap-3 text-sm text-gray-600">
+                <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <span>Kudus, Jawa Tengah, Indonesia</span>
+              </div>
+            </div>
         </div>
 
-        {/* Copyright */}
-        <div className="border-t border-[#2D3748] pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-gray-400 text-sm">
-              &copy; {new Date().getFullYear()} Health & Digital Nutrition. All rights reserved.
-            </p>
-            <div className="flex gap-6 text-sm">
-              <a href="#" className="text-gray-400 hover:text-[#4ECDC4] transition-colors">
-                Privacy Policy
-              </a>
-              <a href="#" className="text-gray-400 hover:text-[#4ECDC4] transition-colors">
-                Terms of Service
-              </a>
-              <a href="#" className="text-gray-400 hover:text-[#4ECDC4] transition-colors">
-                Cookie Policy
-              </a>
-            </div>
-          </div>
+        {/* Divider */}
+        <div className="h-px bg-gray-200 my-12" />
+
+        {/* Bottom Section */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          {/* Copyright */}
+          <p className="text-sm text-gray-600 text-center md:text-left">
+            © {currentYear} WellNest. Semua hak dilindungi. Dibuat dengan ❤️ untuk kesehatan Anda.
+          </p>
+
+      
         </div>
       </div>
     </footer>
