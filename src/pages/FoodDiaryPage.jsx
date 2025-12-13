@@ -295,7 +295,7 @@ const FoodDiaryPage = () => {
         {showSearch && (
           <Card className="mb-4 md:mb-6 p-4 md:p-6">
             <h3 className="text-lg font-semibold mb-4">Cari Makanan</h3>
-            
+
             {/* Search Input */}
             <div className="mb-4">
               <div className="flex flex-col sm:flex-row gap-2">
@@ -303,17 +303,16 @@ const FoodDiaryPage = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="contoh: nasi goreng, ayam bakar"
-                  className="flex-1"
+                  className="flex-1 h-10"
                   disabled={isSearching}
                 />
-                <Button
+                <button
                   onClick={handleSearch}
-                  variant="primary"
                   disabled={isSearching || !searchQuery.trim()}
-                  className="w-full sm:w-auto"
+                  className="px-6 h-10 rounded-lg font-bold text-sm bg-teal-600 text-white hover:bg-teal-700 transition-colors disabled:bg-gray-300 whitespace-nowrap"
                 >
                   {isSearching ? 'Mencari...' : 'Cari'}
-                </Button>
+                </button>
               </div>
             </div>
 
