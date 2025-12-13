@@ -89,7 +89,7 @@ const ResetPasswordPage = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-white p-4 md:p-8 relative overflow-hidden">
+    <div className="min-h-screen w-full flex items-center justify-center bg-white p-4 sm:p-6 md:p-8 pt-20 sm:pt-24 md:pt-28 lg:pt-8 relative overflow-hidden">
       {/* Animated Background Waves - sama kayak LoginPage */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
         <svg 
@@ -156,24 +156,24 @@ const ResetPasswordPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-white rounded-3xl shadow-2xl overflow-hidden border-2 border-gray-200"
+          className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden border-2 border-gray-200"
         >
-          <div className="p-8 md:p-12">
+          <div className="p-6 sm:p-8 md:p-10 lg:p-12">
             {/* Logo */}
-            <div className="flex justify-center mb-8">
+            <div className="flex justify-center mb-6 sm:mb-8">
               <Link to="/" className="flex items-center space-x-3">
-                <span className="text-3xl font-bold text-green-600">
+                <span className="text-2xl sm:text-3xl font-bold text-green-600">
                   WellNezt
                 </span>
               </Link>
             </div>
 
             {/* Header */}
-            <div className="text-center mb-8">
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+            <div className="text-center mb-6 sm:mb-8">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 sm:mb-3">
                 {isSuccess ? '✨ Berhasil!' : 'Reset Password'}
               </h1>
-              <p className="text-gray-600 text-lg">
+              <p className="text-gray-600 text-base sm:text-lg">
                 {isSuccess 
                   ? 'Password kamu sudah berhasil direset!'
                   : 'Masukkan password baru kamu'}
@@ -181,15 +181,15 @@ const ResetPasswordPage = () => {
             </div>
 
             {!isSuccess ? (
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 lg:space-y-6">
                 {/* Error Alert */}
                 {error && (
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex items-start p-4 bg-red-50 border-2 border-red-200 rounded-2xl"
+                    className="flex items-start p-3 sm:p-4 bg-red-50 border-2 border-red-200 rounded-xl sm:rounded-2xl"
                   >
-                    <FiAlertCircle className="text-red-500 text-xl mt-0.5 mr-3 flex-shrink-0" />
+                    <FiAlertCircle className="text-red-500 text-lg sm:text-xl mt-0.5 mr-2 sm:mr-3 flex-shrink-0" />
                     <div className="flex-1">
                       <p className="text-red-700 font-semibold text-sm">Error</p>
                       <p className="text-red-600 text-sm">{error}</p>
@@ -199,18 +199,18 @@ const ResetPasswordPage = () => {
                       onClick={() => setError('')}
                       className="text-red-400 hover:text-red-600 ml-2"
                     >
-                      <FiX size={20} />
+                      <FiX size={18} className="sm:w-5 sm:h-5" />
                     </button>
                   </motion.div>
                 )}
 
                 {/* Password Baru */}
                 <div>
-                  <label htmlFor="password" className="block text-gray-700 font-semibold text-base mb-3">
+                  <label htmlFor="password" className="block text-gray-700 font-semibold text-sm sm:text-base mb-2 sm:mb-3">
                     Password Baru
                   </label>
-                  <div className="flex items-center px-5 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus-within:border-green-500 focus-within:bg-white transition-all">
-                    <FiLock className="mr-4 text-gray-400 text-xl" />
+                  <div className="flex items-center px-3 sm:px-4 lg:px-5 py-3 sm:py-3.5 lg:py-4 bg-gray-50 border-2 border-gray-200 rounded-xl sm:rounded-2xl focus-within:border-green-500 focus-within:bg-white transition-all">
+                    <FiLock className="mr-2 sm:mr-3 lg:mr-4 text-gray-400 text-base sm:text-lg lg:text-xl" />
                     <input
                       id="password"
                       name="password"
@@ -220,7 +220,7 @@ const ResetPasswordPage = () => {
                       value={formData.password}
                       onChange={handleChange}
                       placeholder="Minimal 8 karakter"
-                      className="w-full bg-transparent text-gray-900 placeholder-gray-400 outline-none text-lg"
+                      className="w-full bg-transparent text-gray-900 placeholder-gray-400 outline-none text-sm sm:text-base lg:text-lg"
                       disabled={isSubmitting || !token || !email}
                     />
                     <button
@@ -230,9 +230,9 @@ const ResetPasswordPage = () => {
                       disabled={isSubmitting}
                     >
                       {showPassword ? (
-                        <FiEyeOff className="text-xl" />
+                        <FiEyeOff className="text-base sm:text-lg lg:text-xl" />
                       ) : (
-                        <FiEye className="text-xl" />
+                        <FiEye className="text-base sm:text-lg lg:text-xl" />
                       )}
                     </button>
                   </div>
@@ -240,11 +240,11 @@ const ResetPasswordPage = () => {
 
                 {/* Konfirmasi Password */}
                 <div>
-                  <label htmlFor="password_confirmation" className="block text-gray-700 font-semibold text-base mb-3">
+                  <label htmlFor="password_confirmation" className="block text-gray-700 font-semibold text-sm sm:text-base mb-2 sm:mb-3">
                     Konfirmasi Password
                   </label>
-                  <div className="flex items-center px-5 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus-within:border-green-500 focus-within:bg-white transition-all">
-                    <FiLock className="mr-4 text-gray-400 text-xl" />
+                  <div className="flex items-center px-3 sm:px-4 lg:px-5 py-3 sm:py-3.5 lg:py-4 bg-gray-50 border-2 border-gray-200 rounded-xl sm:rounded-2xl focus-within:border-green-500 focus-within:bg-white transition-all">
+                    <FiLock className="mr-2 sm:mr-3 lg:mr-4 text-gray-400 text-base sm:text-lg lg:text-xl" />
                     <input
                       id="password_confirmation"
                       name="password_confirmation"
@@ -254,7 +254,7 @@ const ResetPasswordPage = () => {
                       value={formData.password_confirmation}
                       onChange={handleChange}
                       placeholder="Ketik ulang password"
-                      className="w-full bg-transparent text-gray-900 placeholder-gray-400 outline-none text-lg"
+                      className="w-full bg-transparent text-gray-900 placeholder-gray-400 outline-none text-sm sm:text-base lg:text-lg"
                       disabled={isSubmitting || !token || !email}
                     />
                     <button
@@ -264,9 +264,9 @@ const ResetPasswordPage = () => {
                       disabled={isSubmitting}
                     >
                       {showConfirmPassword ? (
-                        <FiEyeOff className="text-xl" />
+                        <FiEyeOff className="text-base sm:text-lg lg:text-xl" />
                       ) : (
-                        <FiEye className="text-xl" />
+                        <FiEye className="text-base sm:text-lg lg:text-xl" />
                       )}
                     </button>
                   </div>
@@ -276,14 +276,14 @@ const ResetPasswordPage = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting || !token || !email}
-                  className="w-full py-5 text-lg font-bold text-white rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  className="w-full py-3 sm:py-4 lg:py-5 text-base sm:text-lg font-bold text-white rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                   style={{ backgroundColor: '#F0B639' }}
                   onMouseEnter={(e) => !isSubmitting && (e.currentTarget.style.backgroundColor = '#E5A820')}
                   onMouseLeave={(e) => !isSubmitting && (e.currentTarget.style.backgroundColor = '#F0B639')}
                 >
                   {isSubmitting ? (
-                    <span className="flex items-center justify-center gap-3">
-                      <svg className="animate-spin h-6 w-6" viewBox="0 0 24 24">
+                    <span className="flex items-center justify-center gap-2 sm:gap-3">
+                      <svg className="animate-spin h-5 w-5 sm:h-6 sm:w-6" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
@@ -299,19 +299,19 @@ const ResetPasswordPage = () => {
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="text-center py-6"
+                className="text-center py-4 sm:py-6"
               >
-                <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-green-100 mb-6">
-                  <FiCheckCircle className="h-10 w-10 text-green-600" />
+                <div className="mx-auto flex items-center justify-center h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-green-100 mb-4 sm:mb-6">
+                  <FiCheckCircle className="h-8 w-8 sm:h-10 sm:w-10 text-green-600" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">Password Berhasil Direset!</h3>
-                <p className="text-gray-600 text-lg mb-6">
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-3">Password Berhasil Direset!</h3>
+                <p className="text-gray-600 text-base sm:text-lg mb-4 sm:mb-6">
                   Password kamu sudah berhasil diubah.<br />
                   Redirecting ke halaman login...
                 </p>
                 <button
                   onClick={() => navigate('/login')}
-                  className="w-full py-5 text-lg font-bold text-white rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02]"
+                  className="w-full py-3 sm:py-4 lg:py-5 text-base sm:text-lg font-bold text-white rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02]"
                   style={{ backgroundColor: '#F0B639' }}
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#E5A820')}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#F0B639')}
@@ -323,10 +323,10 @@ const ResetPasswordPage = () => {
 
             {/* Back to Login Link */}
             {!isSuccess && (
-              <div className="mt-8 text-center">
+              <div className="mt-6 sm:mt-8 text-center">
                 <Link
                   to="/login"
-                  className="text-green-600 font-semibold hover:text-green-700 underline text-lg"
+                  className="text-green-600 font-semibold hover:text-green-700 underline text-base sm:text-lg"
                 >
                   ← Kembali ke Login
                 </Link>

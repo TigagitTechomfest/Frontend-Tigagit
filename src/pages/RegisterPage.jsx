@@ -4,12 +4,11 @@ import { motion } from 'framer-motion';
 import useAuthStore from '../store/authStore';
 import api from '../services/api';
 import Button from '../components/common/Button';
-import { colors } from '../constants/styles';
-import { FaBaby, FaWeightHanging, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaBaby, FaWeightHanging, FaEye, FaEyeSlash, FaChair, FaWalking, FaRunning, FaDumbbell } from 'react-icons/fa';
 import { GiBodyHeight } from 'react-icons/gi';
 import { BsPersonStanding } from 'react-icons/bs';
 import { IoMale, IoFemale } from 'react-icons/io5';
-import { Weight } from 'lucide-react';
+import { Weight, Target, TrendingDown, Activity, Utensils, Leaf, Globe, Ban } from 'lucide-react';
 import sadKhalisha from '../assets/images/sad_khalisha.png';
 import happyRico from '../assets/images/happy_rico.png';
 import sadAldi from '../assets/images/sad_aldi.png';
@@ -19,10 +18,12 @@ import food3 from '../assets/images/food_3.png';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
-  const { register, isAuthenticated, isLoading, error } = useAuthStore();
+  const { register, isAuthenticated } = useAuthStore();
   
   const [step, setStep] = useState(1);
   const [bmiResult, setBmiResult] = useState(null);
+  const [assessmentData, setAssessmentData] = useState(null);
+  const [selectedGoal, setSelectedGoal] = useState(null);
   const [formData, setFormData] = useState({
     age: '',
     gender: 'male',
@@ -32,15 +33,70 @@ const RegisterPage = () => {
     email: '',
     password: '',
     confirmPassword: '',
+    activity_level: '',
+    dietary_preference: ''
   });
   
   const [validationError, setValidationError] = useState('');
   const [genderSelected, setGenderSelected] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState('');
-
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const ACTIVITY_LEVELS = [
+    {
+      value: 'Sedentary',
+      label: 'Sedenter (Kurang Aktif)',
+      description: 'Banyak duduk, jarang berolahraga.',
+      icon: <FaChair className="w-6 h-6" />
+    },
+    {
+      value: 'Light',
+      label: 'Ringan',
+      description: 'Olahraga ringan 1-3 hari/minggu.',
+      icon: <FaWalking className="w-6 h-6" />
+    },
+    {
+      value: 'Moderate',
+      label: 'Sedang',
+      description: 'Olahraga sedang 3-5 hari/minggu.',
+      icon: <FaRunning className="w-6 h-6" />
+    },
+    {
+      value: 'Very Active',
+      label: 'Sangat Aktif',
+      description: 'Olahraga berat 6-7 hari/minggu.',
+      icon: <FaDumbbell className="w-6 h-6" />
+    }
+  ];
+
+  const DIETARY_PREFERENCES = [
+    {
+      value: 'General',
+      label: 'Umum (General)',
+      description: 'Tidak ada pantangan makan khusus.',
+      icon: <Globe className="w-6 h-6" />
+    },
+    {
+      value: 'Halal',
+      label: 'Halal',
+      description: 'Sesuai syariat Islam.',
+      icon: <Utensils className="w-6 h-6" />
+    },
+    {
+      value: 'Vegetarian',
+      label: 'Vegetarian',
+      description: 'Tanpa daging, boleh susu/telur.',
+      icon: <Leaf className="w-6 h-6" />
+    },
+    {
+      value: 'Vegan',
+      label: 'Vegan',
+      description: 'Tanpa produk hewan sama sekali.',
+      icon: <Leaf className="w-6 h-6 text-green-600" />
+    }
+  ];
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -57,7 +113,27 @@ const RegisterPage = () => {
     if (apiError) setApiError('');
   };
 
-  const nextStep = () => {
+  const calculateAssessment = async () => {
+    try {
+      const response = await api.post('/assessment/calculate', {
+        age: parseInt(formData.age),
+        gender: formData.gender,
+        height: parseFloat(formData.height),
+        weight: parseFloat(formData.weight),
+        activity_level: formData.activity_level
+      });
+      
+      setAssessmentData(response.data);
+      // Set default goal to primary recommendation
+      setSelectedGoal(response.data.recommendation.primaryGoal);
+      return response.data;
+    } catch (error) {
+      console.error('Assessment calculation error:', error);
+      throw error;
+    }
+  };
+
+  const nextStep = async () => {
     if (step === 1 && !formData.age) {
       setValidationError('Mohon isi usia Anda');
       return;
@@ -90,6 +166,26 @@ const RegisterPage = () => {
       const bmi = (parseFloat(formData.weight) / (heightInMeters * heightInMeters)).toFixed(1);
       setBmiResult(bmi);
     }
+
+    if (step === 5) {
+      if (!formData.activity_level) {
+        setValidationError('Mohon pilih tingkat aktivitas Anda');
+        return;
+      }
+      
+      // Calculate assessment after activity level input
+      try {
+        await calculateAssessment();
+      } catch (error) {
+        setApiError('Gagal menghitung rekomendasi. Silakan coba lagi.');
+        return;
+      }
+    }
+
+    if (step === 8 && !formData.dietary_preference) {
+      setValidationError('Mohon pilih preferensi makanan Anda');
+      return;
+    }
     
     setStep(prev => prev + 1);
     setValidationError('');
@@ -100,41 +196,6 @@ const RegisterPage = () => {
     setStep(prev => prev - 1);
     setValidationError('');
     setApiError('');
-  };
-
-  const saveAssessment = async (token, userId) => {
-    try {
-      const heightInMeters = parseFloat(formData.height) / 100;
-      const bmi = (parseFloat(formData.weight) / (heightInMeters * heightInMeters)).toFixed(1);
-
-      const assessmentData = {
-        user_id: userId,
-        age: parseInt(formData.age),
-        gender: formData.gender,
-        height: parseFloat(formData.height),
-        weight: parseFloat(formData.weight),
-        bmi: parseFloat(bmi),
-        activity_level: "Moderate",
-        health_goal: "Maintain", 
-        dietary_preference: "Halal",
-        daily_calorie_target: 2000,
-        daily_protein_target: 50,
-        daily_carbs_target: 250,
-        daily_fat_target: 67
-      };
-
-      const response = await api.post('/assessment', assessmentData, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      return response.data;
-    } catch (error) {
-      console.error('Assessment error:', error);
-      throw error;
-    }
   };
 
   const handleSubmit = async (e) => {
@@ -155,50 +216,38 @@ const RegisterPage = () => {
       return;
     }
 
+    if (!selectedGoal) {
+      setValidationError('Mohon pilih target fitness Anda');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
-      // register() mengembalikan response.data dari API
+      // Map goal type to health_goal
+      const goalMapping = {
+        'CUTTING': 'Weight Loss',
+        'MAINTAIN': 'Maintain',
+        'BULKING': 'Weight Gain'
+      };
+
       const response = await register({
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        password_confirmation: formData.confirmPassword
+        password_confirmation: formData.confirmPassword,
+        age: parseInt(formData.age),
+        gender: formData.gender,
+        height: parseFloat(formData.height),
+        weight: parseFloat(formData.weight),
+        activity_level: formData.activity_level,
+        health_goal: goalMapping[selectedGoal],
+        dietary_preference: formData.dietary_preference
       });
 
-      // Log untuk debugging
       console.log('✅ Register response:', response);
-
-      // Ekstrak user dan token dari berbagai kemungkinan struktur
-      const user = response.data?.user || response.user;
-      const token = 
-        response.data?.authorization?.token || 
-        response.authorization?.token || 
-        response.token;
-
-      if (!token) {
-        console.error('❌ Token not found in response:', response);
-        throw new Error('Gagal mendapatkan token autentikasi');
-      }
-
-      if (!user) {
-        console.error('❌ User not found in response:', response);
-        throw new Error('Data pengguna tidak ditemukan');
-      }
-
-      // Pastikan user.id ada (bisa jadi _id jika MongoDB)
-      const userId = user.id || user._id;
-      if (!userId) {
-        throw new Error('ID pengguna tidak valid');
-      }
-
-      // Simpan token ke localStorage (double check)
-      localStorage.setItem('token', token);
-
-      // Kirim assessment
-      await saveAssessment(token, userId);
-
       navigate('/dashboard');
     } catch (error) {
-      console.error('❌ Registration or assessment error:', error);
+      console.error('❌ Registration error:', error);
       setApiError(
         error.response?.data?.message || 
         error.message || 
@@ -436,6 +485,12 @@ const RegisterPage = () => {
             {validationError && (
               <div className="text-red-500 text-sm mt-2">{validationError}</div>
             )}
+
+            {apiError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+                {apiError}
+              </div>
+            )}
             
             <div className="flex space-x-3 pt-4">
               <button
@@ -456,8 +511,71 @@ const RegisterPage = () => {
             </div>
           </div>
         );
-      
+
       case 5:
+        return (
+          <div className="space-y-6">
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
+                <FaRunning className="text-2xl text-green-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Tingkat Aktivitas</h3>
+              <p className="text-gray-600 text-sm">Seberapa sering kamu bergerak?</p>
+            </div>
+            
+            <div className="space-y-3">
+              {ACTIVITY_LEVELS.map((level) => (
+                <button
+                  key={level.value}
+                  type="button"
+                  onClick={() => {
+                    setFormData(prev => ({ ...prev, activity_level: level.value }));
+                    if (validationError) setValidationError('');
+                  }}
+                  className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-4 text-left ${
+                    formData.activity_level === level.value
+                      ? 'border-yellow-400 bg-yellow-50 shadow-md transform scale-[1.02]'
+                      : 'border-green-200 hover:border-green-400 bg-white hover:bg-green-50'
+                  }`}
+                >
+                  <div className={`p-3 rounded-full ${
+                    formData.activity_level === level.value ? 'bg-yellow-200 text-yellow-700' : 'bg-green-100 text-green-600'
+                  }`}>
+                    {level.icon}
+                  </div>
+                  <div>
+                    <div className="font-bold text-gray-900">{level.label}</div>
+                    <div className="text-sm text-gray-600">{level.description}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {validationError && (
+              <div className="text-red-500 text-sm mt-2 text-center">{validationError}</div>
+            )}
+            
+            <div className="flex space-x-3 pt-4">
+              <button
+                type="button"
+                onClick={prevStep}
+                className="flex-1 py-3 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold transition-colors"
+              >
+                Kembali
+              </button>
+              <button
+                type="button"
+                onClick={nextStep}
+                className="flex-1 py-3 rounded-xl bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!formData.activity_level}
+              >
+                Selanjutnya
+              </button>
+            </div>
+          </div>
+        );
+      
+      case 6:
         const bmiValue = parseFloat(bmiResult);
         const bmiCategory = getBmiCategory(bmiValue);
         
@@ -518,7 +636,7 @@ const RegisterPage = () => {
                 <div className="mt-4 mb-3">
                   <div className="h-2.5 bg-green-100 rounded-full overflow-hidden border border-green-200">
                     <div 
-                      className={`h-full bg-gradient-to-r from-green-400 to-emerald-500`}
+                      className="h-full bg-gradient-to-r from-green-400 to-emerald-500"
                       style={{
                         width: `${Math.min(100, Math.max(5, (bmiValue / 40) * 100))}%`,
                         transition: 'width 1s ease-in-out'
@@ -564,7 +682,190 @@ const RegisterPage = () => {
           </motion.div>
         );
 
-      case 6:
+      case 7:
+        if (!assessmentData) return null;
+
+        const getGoalIcon = (type) => {
+          switch(type) {
+            case 'CUTTING': return <TrendingDown className="w-6 h-6" />;
+            case 'MAINTAIN': return <Target className="w-6 h-6" />;
+            case 'BULKING': return <Activity className="w-6 h-6" />;
+            default: return <Target className="w-6 h-6" />;
+          }
+        };
+
+        const getGoalColor = (type, isSelected) => {
+          const colors = {
+            'CUTTING': isSelected ? 'border-red-400 bg-red-50' : 'border-red-200 hover:border-red-300',
+            'MAINTAIN': isSelected ? 'border-green-400 bg-green-50' : 'border-green-200 hover:border-green-300',
+            'BULKING': isSelected ? 'border-blue-400 bg-blue-50' : 'border-blue-200 hover:border-blue-300'
+          };
+          return colors[type] || colors['MAINTAIN'];
+        };
+
+        const getGoalIconColor = (type, isSelected) => {
+          const colors = {
+            'CUTTING': isSelected ? 'bg-red-100 text-red-600' : 'bg-red-50 text-red-500',
+            'MAINTAIN': isSelected ? 'bg-green-100 text-green-600' : 'bg-green-50 text-green-500',
+            'BULKING': isSelected ? 'bg-blue-100 text-blue-600' : 'bg-blue-50 text-blue-500'
+          };
+          return colors[type] || colors['MAINTAIN'];
+        };
+
+        return (
+          <motion.div 
+            className="space-y-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
+                <Target className="text-2xl text-green-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Pilih Target Fitness Kamu</h3>
+              <p className="text-sm text-gray-600">
+                BMI: <span className="font-semibold">{assessmentData.meta.bmi}</span> • 
+                TDEE: <span className="font-semibold">{assessmentData.meta.tdee} kal/hari</span>
+              </p>
+            </div>
+
+            <motion.div 
+              className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              <p className="text-sm text-gray-800 text-center font-medium">
+                💡 {assessmentData.recommendation.message}
+              </p>
+            </motion.div>
+
+            <div className="space-y-3">
+              {assessmentData.availableGoals.map((goal, index) => (
+                <motion.button
+                  key={goal.type}
+                  type="button"
+                  onClick={() => setSelectedGoal(goal.type)}
+                  className={`w-full p-4 rounded-xl border-2 transition-all ${getGoalColor(goal.type, selectedGoal === goal.type)}`}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.1 * index }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`p-3 rounded-lg ${getGoalIconColor(goal.type, selectedGoal === goal.type)}`}>
+                      {getGoalIcon(goal.type)}
+                    </div>
+                    <div className="flex-1 text-left">
+                      <div className="flex items-center justify-between mb-1">
+                        <h4 className="font-bold text-gray-900">{goal.label}</h4>
+                        {goal.type === assessmentData.recommendation.primaryGoal && (
+                          <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full font-medium">
+                            Rekomendasi
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">{goal.description}</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs bg-white px-2 py-1 rounded-md border border-gray-200 font-semibold text-gray-700">
+                          🔥 {goal.targetCalories} kal/hari
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+
+            {validationError && (
+              <div className="text-red-500 text-sm text-center">{validationError}</div>
+            )}
+
+            <div className="flex space-x-3 pt-2">
+              <button
+                type="button"
+                onClick={prevStep}
+                className="flex-1 py-3 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold transition-colors"
+              >
+                Kembali
+              </button>
+              <button
+                type="button"
+                onClick={nextStep}
+                className="flex-1 py-3 rounded-xl bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!selectedGoal}
+              >
+                Selanjutnya
+              </button>
+            </div>
+          </motion.div>
+        );
+
+      case 8:
+        return (
+          <div className="space-y-6">
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
+                <Utensils className="text-2xl text-green-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Preferensi Makanan</h3>
+              <p className="text-gray-600 text-sm">Pilih gaya makanmu</p>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {DIETARY_PREFERENCES.map((diet) => (
+                <button
+                  key={diet.value}
+                  type="button"
+                  onClick={() => {
+                    setFormData(prev => ({ ...prev, dietary_preference: diet.value }));
+                    if (validationError) setValidationError('');
+                  }}
+                  className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center text-center gap-2 ${
+                    formData.dietary_preference === diet.value
+                      ? 'border-yellow-400 bg-yellow-50 shadow-md'
+                      : 'border-green-200 hover:border-green-400 bg-white hover:bg-green-50'
+                  }`}
+                >
+                  <div className={`p-3 rounded-full ${
+                    formData.dietary_preference === diet.value ? 'bg-yellow-200 text-yellow-700' : 'bg-green-100 text-green-600'
+                  }`}>
+                    {diet.icon}
+                  </div>
+                  <div>
+                    <div className="font-bold text-gray-900">{diet.label}</div>
+                    <div className="text-xs text-gray-600 mt-1">{diet.description}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {validationError && (
+              <div className="text-red-500 text-sm mt-2 text-center">{validationError}</div>
+            )}
+            
+            <div className="flex space-x-3 pt-4">
+              <button
+                type="button"
+                onClick={prevStep}
+                className="flex-1 py-3 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold transition-colors"
+              >
+                Kembali
+              </button>
+              <button
+                type="button"
+                onClick={nextStep}
+                className="flex-1 py-3 rounded-xl bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!formData.dietary_preference}
+              >
+                Selanjutnya
+              </button>
+            </div>
+          </div>
+        );
+
+      case 9:
         return (
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="text-center">
@@ -816,7 +1117,7 @@ const RegisterPage = () => {
           transition={{ delay: 0.2, duration: 0.6 }}
         >
           <div className="bg-white border-2 border-gray-200 rounded-3xl p-8 shadow-lg">
-            {validationError && step !== 6 && (
+            {validationError && step !== 9 && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-4">
                 {validationError}
               </div>
