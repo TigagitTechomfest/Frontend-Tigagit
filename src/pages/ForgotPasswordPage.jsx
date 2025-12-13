@@ -10,7 +10,7 @@ import food3 from '../assets/images/food_3.png';
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
   const { forgotPassword } = useAuthStore();
-  
+
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -19,19 +19,19 @@ const ForgotPasswordPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
+
     // Validasi email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email) {
       setError('Email harus diisi');
       return;
     }
-    
+
     if (!emailRegex.test(email)) {
       setError('Format email tidak valid');
       return;
     }
-    
+
     try {
       setIsSubmitting(true);
       await forgotPassword(email);
@@ -51,9 +51,9 @@ const ForgotPasswordPage = () => {
     <div className="min-h-screen w-full flex items-center justify-center bg-white p-4 sm:p-6 md:p-8 pt-20 sm:pt-24 md:pt-28 lg:pt-8 relative overflow-hidden">
       {/* Animated Wave Background */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-        <svg 
-          className="absolute w-full h-full" 
-          viewBox="0 0 1440 800" 
+        <svg
+          className="absolute w-full h-full"
+          viewBox="0 0 1440 800"
           preserveAspectRatio="none"
         >
           <motion.path
@@ -72,7 +72,7 @@ const ForgotPasswordPage = () => {
               ease: "easeInOut"
             }}
           />
-          
+
           <motion.path
             d="M0,450 Q360,370 720,450 T1440,450 L1440,800 L0,800 Z"
             fill="#DFFAEB"
@@ -89,7 +89,7 @@ const ForgotPasswordPage = () => {
               ease: "easeInOut"
             }}
           />
-          
+
           <motion.path
             d="M0,500 Q360,420 720,500 T1440,500 L1440,800 L0,800 Z"
             fill="rgba(34, 197, 94, 0.08)"
@@ -110,7 +110,7 @@ const ForgotPasswordPage = () => {
       </div>
 
       <div className="w-full max-w-7xl flex flex-col lg:flex-row gap-6 sm:gap-8 lg:gap-16 xl:gap-24 items-center relative z-10">
-        
+
         {/* LEFT SIDE - HERO */}
         <motion.div
           className="w-full lg:w-1/2 flex flex-col items-center lg:items-start mb-4 sm:mb-6 lg:mb-0"
@@ -136,7 +136,7 @@ const ForgotPasswordPage = () => {
               className="absolute w-60 h-60 rounded-full overflow-hidden z-20"
               style={{ top: '10%', left: '-15%' }}
               animate={{ rotate: [0, 360] }}
-              transition={{ rotate: { duration: 20, repeat: Infinity, ease: "linear" }}}
+              transition={{ rotate: { duration: 20, repeat: Infinity, ease: "linear" } }}
             >
               <img
                 src={food1}
@@ -144,12 +144,12 @@ const ForgotPasswordPage = () => {
                 className="w-full h-full object-cover"
               />
             </motion.div>
-            
+
             <motion.div
               className="absolute w-80 h-80 rounded-full overflow-hidden z-10"
               style={{ top: '-20%', right: '0%' }}
               animate={{ rotate: [0, -360] }}
-              transition={{ rotate: { duration: 25, repeat: Infinity, ease: "linear" }}}
+              transition={{ rotate: { duration: 25, repeat: Infinity, ease: "linear" } }}
             >
               <img
                 src={food2}
@@ -157,12 +157,12 @@ const ForgotPasswordPage = () => {
                 className="w-full h-full object-cover"
               />
             </motion.div>
-            
+
             <motion.div
               className="absolute w-45 h-45 rounded-full overflow-hidden z-20"
               style={{ bottom: '-12%', left: '17%' }}
               animate={{ rotate: [0, 360] }}
-              transition={{ rotate: { duration: 18, repeat: Infinity, ease: "linear" }}}
+              transition={{ rotate: { duration: 18, repeat: Infinity, ease: "linear" } }}
             >
               <img
                 src={food3}
@@ -181,7 +181,7 @@ const ForgotPasswordPage = () => {
           transition={{ delay: 0.2, duration: 0.6 }}
         >
           <div className="bg-white border-2 border-gray-200 rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-12 lg:p-16 xl:p-20 shadow-lg">
-            
+
             {!isSuccess ? (
               <>
                 {/* Header */}
@@ -191,7 +191,7 @@ const ForgotPasswordPage = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 }}
                 >
-                  <div className="flex items-center justify-center lg:justify-start w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-green-100 rounded-full mb-4 sm:mb-5 lg:mb-6 mx-auto lg:mx-0">
+                  <div className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-green-100 rounded-full  mb-4 sm:mb-5 lg:mb-6 mx-auto lg:mx-0">
                     <FiMail className="text-green-600 text-xl sm:text-2xl lg:text-3xl" />
                   </div>
                   <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-gray-900 mb-2 sm:mb-3 lg:mb-4">
