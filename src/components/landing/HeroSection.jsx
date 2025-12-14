@@ -46,7 +46,7 @@ const HeroSection = () => {
       id: 1,
       name: 'Narayana Cokro Kusumo Amsyari',
       role: 'Leader, Frontend, UI/UX Designer',
-      bio: 'Bikin ide ini karena pengen sehat dan bermanfaat buat banyak orang.',
+      bio: 'Im excited to connect with others who share my interests, learn together, and potentially collaborate on some amazing projects.',
       image: rico,
       color: 'from-emerald-500 to-teal-600',
       linkedin: 'https://www.linkedin.com/in/narayana-cokro-kusumo-amsyari-b053552a1/',
@@ -56,7 +56,7 @@ const HeroSection = () => {
       id: 2,
       name: 'Aldiansyah Fayruz',
       role: 'AI & Backend Engineer',
-      bio: 'Spesialis backend dengan keahlian dalam database optimization dan API development.',
+      bio: 'What drives me is not just the desire to build technology but the belief that I can make a difference. My personal motivation comes from my parents. I strive to make them proud and show them that their support is encouraging me toward success in the tech world.',
       image: aldi,
       color: 'from-blue-500 to-indigo-600',
       linkedin: 'https://www.linkedin.com/in/aldiansyah-fayruz-74522018b/',
@@ -66,10 +66,10 @@ const HeroSection = () => {
       id: 3,
       name: 'Khalisha Kaylanasywa',
       role: 'Frontend & UI/UX Designer',
-      bio: 'Cewe jago UI/UX, Speaking, Full experience.',
+      bio: 'Working on real projects has let me team up with some awesome professionals and friends, creating useful and fun applications.',
       image: khalisha,
       color: 'from-pink-500 to-rose-600',
-      linkedin: 'https://www.linkedin.com/in/aldiansyah-fayruz-74522018b/',
+      linkedin: 'https://www.linkedin.com/in/khalishakaylanasywa/',
       github: 'https://github.com/khalllishaa'
     }
   ];
@@ -462,12 +462,13 @@ const HeroSection = () => {
             >
               <h3 className="text-2xl font-bold text-gray-800 mb-4">{service.title}</h3>
               <p className="text-gray-600 leading-relaxed mb-6">{service.description}</p>
-              <motion.div
+              <motion.button
+              onClick={() => window.location.href = '/register'}
                 whileHover={{ x: 5 }}
                 className="text-emerald-600 font-bold text-sm flex items-center gap-2"
               >
                 Pelajari Lebih <span className="text-xl">→</span>
-              </motion.div>
+              </motion.button>
             </motion.div>
           ))}
         </div>
@@ -493,10 +494,10 @@ const HeroSection = () => {
             <h4 className="text-gray-700 text-xl mb-6">
               Raih berat badan ideal dengan pola makan tepat dan terukur.
             </h4>
-            <h2 className="text-4xl md:text-5xl text-gray-800 font-light mb-8 leading-relaxed">
-              <span className="font-bold text-emerald-600">Rencanakan</span>, lacak dan capai
-              <span className="font-bold text-emerald-600"> target </span>berat badan Anda
-              <span className="font-bold text-emerald-600"> hingga ideal</span>
+            <h2 className="text-4xl md:text-5xl text-white font-light mb-8 leading-relaxed">
+              <span className="font-bold text-teal-800">Rencanakan</span>, lacak dan capai
+              <span className="font-bold  text-teal-800"> target </span>berat badan Anda
+              <span className="font-bold  text-teal-800"> hingga ideal</span>
             </h2>
             <motion.button
               whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(0,0,0,0.2)" }}
