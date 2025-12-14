@@ -968,167 +968,167 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-white p-4 md:p-8 relative overflow-hidden">
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-        <svg 
-          className="absolute w-full h-full" 
-          viewBox="0 0 1440 800" 
-          preserveAspectRatio="none"
-        >
-          <motion.path
-            d="M0,400 Q360,320 720,400 T1440,400 L1440,800 L0,800 Z"
-            fill="#DEEDE0"
-            animate={{
-              d: [
-                "M0,400 Q360,320 720,400 T1440,400 L1440,800 L0,800 Z",
-                "M0,400 Q360,480 720,400 T1440,400 L1440,800 L0,800 Z",
-                "M0,400 Q360,320 720,400 T1440,400 L1440,800 L0,800 Z"
-              ]
-            }}
-            transition={{
-              duration: 8,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-          
-          <motion.path
-            d="M0,450 Q360,370 720,450 T1440,450 L1440,800 L0,800 Z"
-            fill="#DFFAEB"
-            animate={{
-              d: [
-                "M0,450 Q360,370 720,450 T1440,450 L1440,800 L0,800 Z",
-                "M0,450 Q360,530 720,450 T1440,450 L1440,800 L0,800 Z",
-                "M0,450 Q360,370 720,450 T1440,450 L1440,800 L0,800 Z"
-              ]
-            }}
-            transition={{
-              duration: 10,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-          
-          <motion.path
-            d="M0,500 Q360,420 720,500 T1440,500 L1440,800 L0,800 Z"
-            fill="rgba(34, 197, 94, 0.08)"
-            animate={{
-              d: [
-                "M0,500 Q360,420 720,500 T1440,500 L1440,800 L0,800 Z",
-                "M0,500 Q360,580 720,500 T1440,500 L1440,800 L0,800 Z",
-                "M0,500 Q360,420 720,500 T1440,500 L1440,800 L0,800 Z"
-              ]
-            }}
-            transition={{
-              duration: 12,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-        </svg>
-      </div>
-
-      <div className="w-full max-w-7xl flex flex-col lg:flex-row gap-8 lg:gap-24 items-center relative z-10">
-        <motion.div
-          className="w-full lg:w-1/2 flex flex-col items-center lg:items-start"
-          initial={{ opacity: 0, x: -50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <div className="mb-8 sm:mb-12 lg:mb-20 text-center lg:text-left w-full px-2">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-gray-900 leading-tight mb-3 sm:mb-4 lg:mb-6">
-              Untuk memudahkan <span className="text-green-600">WellNezt</span> membantumu dengan maksimal,
-            </h1>
-            <p className="text-base sm:text-lg md:text-xl lg:text-1xl text-gray-700">
-              isi dulu beberapa informasi tentang dirimu ya!
-            </p>
-          </div>
-
-          <div className="relative w-full max-w-md h-[320px] mx-auto flex items-center justify-center">
-            <motion.div
-              className="absolute w-60 h-60 md:w-60 md:h-60 lg:w-60 lg:h-60 rounded-full overflow-hidden z-20"
-              style={{ top: '10%', left: '-20%' }}
-              animate={{ 
-                rotate: [0, 360],
-              }}
-              transition={{
-                rotate: {
-                  duration: 20,
-                  repeat: Infinity,
-                  ease: "linear"
-                }
-              }}
-            >
-              <img
-                src={food1}
-                alt="Healthy food 1"
-                className="w-full h-full object-cover"
-              />
-            </motion.div>
-            
-            <motion.div
-              className="absolute w-100 h-100 md:w-100 md:h-100 lg:w-80 lg:h-80 rounded-full overflow-hidden z-10"
-              style={{ top: '-20%', right: '0%' }}
-              animate={{ 
-                rotate: [0, -360],
-              }}
-              transition={{
-                rotate: {
-                  duration: 25,
-                  repeat: Infinity,
-                  ease: "linear"
-                }
-              }}
-            >
-              <img
-                src={food2}
-                alt="Healthy food 2"
-                className="w-full h-full object-cover"
-              />
-            </motion.div>
-            
-            <motion.div
-              className="absolute w-45 h-45 md:w-45 md:h-45 lg:w-45 lg:h-45 rounded-full overflow-hidden z-20"
-              style={{ bottom: '-12%', left: '17%' }}
-              animate={{ 
-                rotate: [0, 360],
-              }}
-              transition={{
-                rotate: {
-                  duration: 18,
-                  repeat: Infinity,
-                  ease: "linear"
-                }
-              }}
-            >
-              <img
-                src={food3}
-                alt="Healthy food 3"
-                className="w-full h-full object-cover"
-              />
-            </motion.div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          className="w-full lg:w-[55%] max-w-2xl"
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2, duration: 0.6 }}
-        >
-          <div className="bg-white border-2 border-gray-200 rounded-3xl p-8 shadow-lg">
-            {validationError && step !== 9 && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-4">
-                {validationError}
-              </div>
-            )}
-
-            {renderStep()}
-          </div>
-        </motion.div>
-      </div>
+  <div className="min-h-screen w-full flex items-center justify-center bg-white p-3 sm:p-4 md:p-8 relative overflow-hidden">
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+      <svg 
+        className="absolute w-full h-full" 
+        viewBox="0 0 1440 800" 
+        preserveAspectRatio="none"
+      >
+        <motion.path
+          d="M0,400 Q360,320 720,400 T1440,400 L1440,800 L0,800 Z"
+          fill="#DEEDE0"
+          animate={{
+            d: [
+              "M0,400 Q360,320 720,400 T1440,400 L1440,800 L0,800 Z",
+              "M0,400 Q360,480 720,400 T1440,400 L1440,800 L0,800 Z",
+              "M0,400 Q360,320 720,400 T1440,400 L1440,800 L0,800 Z"
+            ]
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        
+        <motion.path
+          d="M0,450 Q360,370 720,450 T1440,450 L1440,800 L0,800 Z"
+          fill="#DFFAEB"
+          animate={{
+            d: [
+              "M0,450 Q360,370 720,450 T1440,450 L1440,800 L0,800 Z",
+              "M0,450 Q360,530 720,450 T1440,450 L1440,800 L0,800 Z",
+              "M0,450 Q360,370 720,450 T1440,450 L1440,800 L0,800 Z"
+            ]
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        
+        <motion.path
+          d="M0,500 Q360,420 720,500 T1440,500 L1440,800 L0,800 Z"
+          fill="rgba(34, 197, 94, 0.08)"
+          animate={{
+            d: [
+              "M0,500 Q360,420 720,500 T1440,500 L1440,800 L0,800 Z",
+              "M0,500 Q360,580 720,500 T1440,500 L1440,800 L0,800 Z",
+              "M0,500 Q360,420 720,500 T1440,500 L1440,800 L0,800 Z"
+            ]
+          }}
+          transition={{
+            duration: 12,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+      </svg>
     </div>
-  );
+
+    <div className="w-full max-w-7xl flex flex-col lg:flex-row gap-6 sm:gap-8 lg:gap-24 items-center relative z-10">
+      <motion.div
+        className="hidden lg:flex w-full lg:w-1/2 flex-col items-center lg:items-start"
+        initial={{ opacity: 0, x: -50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <div className="mb-6 sm:mb-12 lg:mb-20 text-center lg:text-left w-full px-2">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl xl:text-7xl font-bold text-gray-900 leading-tight mb-2 sm:mb-4 lg:mb-6">
+            Untuk memudahkan <span className="text-green-600">WellNezt</span> membantumu dengan maksimal,
+          </h1>
+          <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-700">
+            isi dulu beberapa informasi tentang dirimu ya!
+          </p>
+        </div>
+
+        <div className="relative w-full max-w-md h-[320px] mx-auto flex items-center justify-center">
+          <motion.div
+            className="absolute w-40 h-40 sm:w-48 sm:h-48 md:w-60 md:h-60 lg:w-60 lg:h-60 rounded-full overflow-hidden z-20"
+            style={{ top: '10%', left: '-20%' }}
+            animate={{ 
+              rotate: [0, 360],
+            }}
+            transition={{
+              rotate: {
+                duration: 20,
+                repeat: Infinity,
+                ease: "linear"
+              }
+            }}
+          >
+            <img
+              src={food1}
+              alt="Healthy food 1"
+              className="w-full h-full object-cover"
+            />
+          </motion.div>
+          
+          <motion.div
+            className="absolute w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-80 lg:h-80 rounded-full overflow-hidden z-10"
+            style={{ top: '-20%', right: '0%' }}
+            animate={{ 
+              rotate: [0, -360],
+            }}
+            transition={{
+              rotate: {
+                duration: 25,
+                repeat: Infinity,
+                ease: "linear"
+              }
+            }}
+          >
+            <img
+              src={food2}
+              alt="Healthy food 2"
+              className="w-full h-full object-cover"
+            />
+          </motion.div>
+          
+          <motion.div
+            className="absolute w-32 h-32 sm:w-40 sm:h-40 md:w-45 md:h-45 lg:w-45 lg:h-45 rounded-full overflow-hidden z-20"
+            style={{ bottom: '-12%', left: '17%' }}
+            animate={{ 
+              rotate: [0, 360],
+            }}
+            transition={{
+              rotate: {
+                duration: 18,
+                repeat: Infinity,
+                ease: "linear"
+              }
+            }}
+          >
+            <img
+              src={food3}
+              alt="Healthy food 3"
+              className="w-full h-full object-cover"
+            />
+          </motion.div>
+        </div>
+      </motion.div>
+
+      <motion.div
+        className="w-full lg:w-[55%] max-w-2xl px-0 sm:px-2"
+        initial={{ opacity: 0, x: 50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.2, duration: 0.6 }}
+      >
+        <div className="bg-white border-2 border-gray-200 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-lg">
+          {validationError && step !== 9 && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-3 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm mb-3 sm:mb-4">
+              {validationError}
+            </div>
+          )}
+
+          {renderStep()}
+        </div>
+      </motion.div>
+    </div>
+  </div>
+);
 };
 
 export default RegisterPage;
