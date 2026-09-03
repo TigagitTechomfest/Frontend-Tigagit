@@ -78,7 +78,7 @@ function AppContent() {
 
 function App() {
   return (
-    <Router>
+    <Router basename="/Frontend-Tigagit">
       <AppContent />
     </Router>
   );
